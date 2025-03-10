@@ -1,5 +1,12 @@
 import { useState, useMemo } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./ui/table";
 import { Card } from "./ui/card";
 import { Input } from "./ui/input";
 import { Dialog } from "./ui/dialog";
@@ -13,7 +20,8 @@ interface ExerciseTableProps {
 
 export default function ExerciseTable({ workouts }: ExerciseTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedExercise, setSelectedExercise] = useState<WorkoutExercise | null>(null);
+  const [selectedExercise, setSelectedExercise] =
+    useState<WorkoutExercise | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   // Type for our enhanced exercise data
@@ -28,9 +36,9 @@ export default function ExerciseTable({ workouts }: ExerciseTableProps) {
   // Extract all unique exercises from workouts
   const exercises = useMemo<EnhancedExercise[]>(() => {
     const exerciseMap = new Map<string, WorkoutExercise[]>();
-    
-    workouts.forEach(workout => {
-      workout.exercises.forEach(exercise => {
+
+    workouts.forEach((workout) => {
+      workout.exercises.forEach((exercise) => {
         if (!exerciseMap.has(exercise.title)) {
           exerciseMap.set(exercise.title, []);
         }
@@ -39,12 +47,12 @@ export default function ExerciseTable({ workouts }: ExerciseTableProps) {
           instances.push({
             ...exercise,
             // Add workout date for reference
-            workout: { date: workout.date, id: workout.programWorkoutId ?? 0 }
+            workout: { date: workout.date, id: workout.programWorkoutId ?? 0 },
           } as WorkoutExercise & { workout: { date: string; id: number } });
         }
       });
     });
-    
+
     return Array.from(exerciseMap.entries()).map(([title, instances]) => {
       // Find the best estimated 1RM across all instances
       const bestOneRepMax = instances.reduce((best, current) => {
@@ -52,7 +60,7 @@ export default function ExerciseTable({ workouts }: ExerciseTableProps) {
           ? current.bestEstimated1RM
           : best;
       }, 0);
-      
+
       return {
         title,
         instances,
@@ -60,26 +68,29 @@ export default function ExerciseTable({ workouts }: ExerciseTableProps) {
           const currentDate = new Date((current as any).workout?.date || 0);
           return currentDate > latest ? currentDate : latest;
         }, new Date(0)),
-        totalSets: instances.reduce((sum, instance) => sum + instance.sets.length, 0),
-        bestOneRepMax: bestOneRepMax > 0 ? bestOneRepMax : undefined
+        totalSets: instances.reduce(
+          (sum, instance) => sum + instance.sets.length,
+          0
+        ),
+        bestOneRepMax: bestOneRepMax > 0 ? bestOneRepMax : undefined,
       };
     });
   }, [workouts]);
-  
+
   // Filter exercises based on search query
   const filteredExercises = useMemo(() => {
     if (!searchQuery) return exercises;
-    
+
     const query = searchQuery.toLowerCase();
-    return exercises.filter(exercise => 
+    return exercises.filter((exercise) =>
       exercise.title.toLowerCase().includes(query)
     );
   }, [exercises, searchQuery]);
-  
+
   // Sort exercises by most recently performed
   const sortedExercises = useMemo(() => {
-    return [...filteredExercises].sort((a, b) => 
-      b.lastPerformed.getTime() - a.lastPerformed.getTime()
+    return [...filteredExercises].sort(
+      (a, b) => b.lastPerformed.getTime() - a.lastPerformed.getTime()
     );
   }, [filteredExercises]);
 
@@ -96,13 +107,13 @@ export default function ExerciseTable({ workouts }: ExerciseTableProps) {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
-  
+
   // Format date for display
   const formatDate = (date: Date): string => {
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -113,7 +124,8 @@ export default function ExerciseTable({ workouts }: ExerciseTableProps) {
           <div>
             <h2 className="text-2xl font-bold">Exercise Library</h2>
             <p className="text-sm text-muted-foreground">
-              {sortedExercises.length} {sortedExercises.length === 1 ? 'exercise' : 'exercises'} found
+              {sortedExercises.length}{" "}
+              {sortedExercises.length === 1 ? "exercise" : "exercises"} found
               {searchQuery && ` for "${searchQuery}"`}
             </p>
           </div>
@@ -126,11 +138,11 @@ export default function ExerciseTable({ workouts }: ExerciseTableProps) {
             />
           </div>
         </div>
-        
+
         <div className="space-y-2 max-w-2xl mx-auto">
           {sortedExercises.length > 0 ? (
-            sortedExercises.map(exercise => (
-              <div 
+            sortedExercises.map((exercise) => (
+              <div
                 key={exercise.title}
                 className="p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => handleExerciseClick(exercise.instances)}
@@ -159,7 +171,7 @@ export default function ExerciseTable({ workouts }: ExerciseTableProps) {
           )}
         </div>
       </Card>
-      
+
       {selectedExercise && (
         <ExerciseDetail
           exercise={selectedExercise}

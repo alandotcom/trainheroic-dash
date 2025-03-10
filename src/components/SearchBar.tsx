@@ -7,13 +7,13 @@ interface SearchBarProps {
   placeholder?: string;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ 
-  onSearch, 
-  placeholder = "Search workouts or exercises..." 
+const SearchBar: React.FC<SearchBarProps> = ({
+  onSearch,
+  placeholder = "Search workouts or exercises...",
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const isInitialMount = useRef(true);
-  
+
   // Use debounce to reduce frequency of search updates
   useEffect(() => {
     // Skip the first render
@@ -21,12 +21,12 @@ const SearchBar: React.FC<SearchBarProps> = ({
       isInitialMount.current = false;
       return;
     }
-    
+
     // Create debounce timer
     const timer = setTimeout(() => {
       onSearch(searchQuery);
     }, 300);
-    
+
     // Cleanup function clears the timer
     return () => clearTimeout(timer);
   }, [searchQuery]); // Removed onSearch from dependencies

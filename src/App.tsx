@@ -13,8 +13,8 @@ import { RefreshCw, LogOut, Dumbbell, LineChart, Calendar } from "lucide-react";
 
 // LocalStorage keys for authentication persistence
 const STORAGE_KEYS = {
-  IS_AUTHENTICATED: 'trainheroic_is_authenticated',
-  WORKOUTS: 'trainheroic_workouts',
+  IS_AUTHENTICATED: "trainheroic_is_authenticated",
+  WORKOUTS: "trainheroic_workouts",
 };
 
 const App: React.FC = () => {
@@ -34,7 +34,7 @@ const App: React.FC = () => {
     try {
       // Restore authentication state
       const savedAuth = localStorage.getItem(STORAGE_KEYS.IS_AUTHENTICATED);
-      if (savedAuth === 'true') {
+      if (savedAuth === "true") {
         setIsAuthenticated(true);
       }
 
@@ -44,9 +44,11 @@ const App: React.FC = () => {
         setWorkouts(JSON.parse(savedWorkouts));
       }
     } catch (error) {
-      console.error('Error restoring state from localStorage:', error);
+      console.error("Error restoring state from localStorage:", error);
       // Clear potentially corrupted data
-      Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+      Object.values(STORAGE_KEYS).forEach((key) =>
+        localStorage.removeItem(key)
+      );
     }
   }, []);
 
@@ -55,36 +57,42 @@ const App: React.FC = () => {
     try {
       setAuthLoading(true);
       setAuthError(null);
-      
+
       // Check for existing workouts in localStorage first
       const savedWorkouts = localStorage.getItem(STORAGE_KEYS.WORKOUTS);
       if (savedWorkouts) {
         // If we have cached workouts, use them immediately
         console.log("Using cached workout data");
         setWorkouts(JSON.parse(savedWorkouts));
-        
+
         // Mark user as authenticated immediately to improve UX
         setIsAuthenticated(true);
-        localStorage.setItem(STORAGE_KEYS.IS_AUTHENTICATED, 'true');
+        localStorage.setItem(STORAGE_KEYS.IS_AUTHENTICATED, "true");
         setAuthLoading(false);
-        
+
         // Then check for new workouts in the background - user won't see a loading screen
         // but will see the progress indicator
         try {
           setLoadingProgress(0);
           const allWorkouts = await getWorkoutHistory(
-            email, 
+            email,
             password,
             (progress) => {
               setLoadingProgress(progress);
             }
           );
-          
+
           // Update with potentially new data
           setWorkouts(allWorkouts);
-          localStorage.setItem(STORAGE_KEYS.WORKOUTS, JSON.stringify(allWorkouts));
+          localStorage.setItem(
+            STORAGE_KEYS.WORKOUTS,
+            JSON.stringify(allWorkouts)
+          );
         } catch (fetchErr) {
-          console.warn("Couldn't update workout data, but using cached data:", fetchErr);
+          console.warn(
+            "Couldn't update workout data, but using cached data:",
+            fetchErr
+          );
           // Still using cached data, so don't show error to user
         } finally {
           setLoadingProgress(0);
@@ -94,7 +102,7 @@ const App: React.FC = () => {
         try {
           setLoadingProgress(0);
           const allWorkouts = await getWorkoutHistory(
-            email, 
+            email,
             password,
             (progress) => {
               setLoadingProgress(progress);
@@ -104,10 +112,13 @@ const App: React.FC = () => {
 
           // Mark user as authenticated
           setIsAuthenticated(true);
-          
+
           // Save state to localStorage
-          localStorage.setItem(STORAGE_KEYS.IS_AUTHENTICATED, 'true');
-          localStorage.setItem(STORAGE_KEYS.WORKOUTS, JSON.stringify(allWorkouts));
+          localStorage.setItem(STORAGE_KEYS.IS_AUTHENTICATED, "true");
+          localStorage.setItem(
+            STORAGE_KEYS.WORKOUTS,
+            JSON.stringify(allWorkouts)
+          );
         } catch (err) {
           console.error("Login error:", err);
           setAuthError(
@@ -127,13 +138,13 @@ const App: React.FC = () => {
     clearAllCaches();
     alert("Cache cleared successfully");
   };
-  
+
   // Handle user logout
   const handleLogout = () => {
     // Clear authentication state
     setIsAuthenticated(false);
     setWorkouts([]);
-    
+
     // Remove from localStorage
     localStorage.removeItem(STORAGE_KEYS.IS_AUTHENTICATED);
     // We keep the workouts in localStorage for faster login next time
@@ -157,7 +168,7 @@ const App: React.FC = () => {
                 />
               </CardContent>
             </Card>
-            
+
             {dataLoading && (
               <div className="mt-8 max-w-md mx-auto space-y-2 px-2">
                 <div className="text-center">
@@ -180,7 +191,7 @@ const App: React.FC = () => {
                 <Button
                   onClick={handleLogout}
                   variant="destructive"
-                  size="sm" 
+                  size="sm"
                   className="gap-1 sm:gap-2"
                   title="Sign out of your account"
                 >
@@ -205,37 +216,49 @@ const App: React.FC = () => {
                       </div>
                     </div>
                   )}
-                  
-                  <Tabs defaultValue="dashboard" className="space-y-4 sm:space-y-6">
+
+                  <Tabs
+                    defaultValue="dashboard"
+                    className="space-y-4 sm:space-y-6"
+                  >
                     <TabsList className="grid w-full max-w-md sm:max-w-lg mx-auto grid-cols-3">
-                      <TabsTrigger value="dashboard" className="flex items-center gap-2">
+                      <TabsTrigger
+                        value="dashboard"
+                        className="flex items-center gap-2"
+                      >
                         <LineChart className="h-4 w-4" />
                         <span>Dashboard</span>
                       </TabsTrigger>
-                      <TabsTrigger value="history" className="flex items-center gap-2">
+                      <TabsTrigger
+                        value="history"
+                        className="flex items-center gap-2"
+                      >
                         <Calendar className="h-4 w-4" />
                         <span>Workout History</span>
                       </TabsTrigger>
-                      <TabsTrigger value="exercises" className="flex items-center gap-2">
+                      <TabsTrigger
+                        value="exercises"
+                        className="flex items-center gap-2"
+                      >
                         <Dumbbell className="h-4 w-4" />
                         <span>Exercises</span>
                       </TabsTrigger>
                     </TabsList>
-                    
+
                     <TabsContent value="dashboard" className="mt-4 sm:mt-6">
                       <DashboardOverview workouts={workouts} />
                     </TabsContent>
-                    
+
                     <TabsContent value="history" className="mt-4 sm:mt-6">
                       <WorkoutTable workouts={workouts} />
                     </TabsContent>
-                    
+
                     <TabsContent value="exercises" className="mt-4 sm:mt-6">
                       <ExerciseTable workouts={workouts} />
                     </TabsContent>
                   </Tabs>
                 </div>
-                
+
                 <div className="mt-8 flex justify-center">
                   <Button
                     onClick={handleClearCache}
