@@ -334,11 +334,16 @@ export const getRecentWorkouts = (
   sessionToken: string,
   startDate: string,
   endDate: string,
-) =>
-  client.GET("/3.0/athlete/programworkout/range", {
+) => {
+  // Ensure parameters are definitely strings
+  const start = String(startDate);
+  const end = String(endDate);
+  
+  return client.GET("/3.0/athlete/programworkout/range", {
     ...makeDefaultOptions(sessionToken),
-    params: { query: { startDate, endDate } },
+    params: { query: { startDate: start, endDate: end } },
   });
+};
 
 export type RecentWorkout = IterableElement<
   RequiredDeep<Awaited<ReturnType<typeof getRecentWorkouts>>>["data"]

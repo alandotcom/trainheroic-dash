@@ -173,12 +173,14 @@ export const getWorkoutHistory = async (
   let mostRecentDate = '1970-01-01';
   if (existingWorkouts.length > 0) {
     // Find the most recent date (workouts are already sorted newest first)
-    mostRecentDate = existingWorkouts[0].date;
+    if (existingWorkouts[0]) {
+      mostRecentDate = existingWorkouts[0].date;
+    }
     console.log(`Most recent cached workout date: ${mostRecentDate}`);
   }
   
   // Step 2: Get the exercise list which we need even for the optimized approach
-  const exercises = await fetchWithCache<Exercise[]>(
+  let exercises = await fetchWithCache<Exercise[]>(
     'exercises-list',
     'exercises',
     async () => {
@@ -217,10 +219,23 @@ export const getWorkoutHistory = async (
       // Check for workouts between the most recent cached date and today
       console.log(`Checking for new workouts between ${mostRecentDate} and ${today}`);
       
+      // Default to a very old date if we don't have a valid date string
+      const defaultStartDate = '1970-01-01';
+      
+      // Force the today value to be a string as well
+      const todayString: string = today || '2099-12-31';
+      
+      // Use a fallback date for mostRecentDate if it's not a valid string
+      // This is a workaround for TypeScript's type checking
+      const startDateString: string = typeof mostRecentDate === 'string' && mostRecentDate
+        ? mostRecentDate 
+        : defaultStartDate;
+      
+      // Now the API call with guaranteed string parameters
       const recentWorkoutsResponse = await getRecentWorkouts(
         sessionToken,
-        mostRecentDate, // Start from the most recent cached date
-        today           // Until today
+        startDateString, // Guaranteed to be a string now
+        todayString     // Guaranteed to be a string now
       );
       
       // If no recent workouts, we can just return the existing data
@@ -260,16 +275,17 @@ export const getWorkoutHistory = async (
       // We'll need to filter our exercise list to only include these
       
       // Get the exercises we need to fetch history for
-      if (newWorkouts.length > 0 && 'exercise_stats' in newWorkouts[0]) {
+      if (newWorkouts.length > 0) {
         // Create a map to track which exercises we need to fetch
         const exercisesToFetch = new Map<string, Exercise>();
         
         // Go through new workouts and mark the exercises used
         for (const workout of newWorkouts) {
-          // The workout might include exercise_stats which tells us which exercises were included
-          if (workout.exercise_stats) {
-            for (const stat of workout.exercise_stats) {
-              if (stat.exercise_id) {
+          // Use type checking to safely access exercise stats
+          const workoutAny = workout as any;
+          if (workoutAny && workoutAny.exercise_stats && Array.isArray(workoutAny.exercise_stats)) {
+            for (const stat of workoutAny.exercise_stats) {
+              if (stat && stat.exercise_id) {
                 // Find the full exercise info from our exercise list
                 const exerciseInfo = exercises.find(
                   e => String(e.id) === String(stat.exercise_id)
@@ -286,7 +302,13 @@ export const getWorkoutHistory = async (
         // If we identified specific exercises, use only those
         if (exercisesToFetch.size > 0) {
           console.log(`Fetching history for ${exercisesToFetch.size} exercises used in new workouts`);
-          exercises = Array.from(exercisesToFetch.values());
+          // Create a new array instead of trying to assign to the constant variable
+          const exercisesToProcess = Array.from(exercisesToFetch.values());
+          
+          // Use a let variable to hold the new array
+          let exercisesToUse = exercises;
+          exercisesToUse = exercisesToProcess;
+          exercises = exercisesToUse;
         } 
         // Otherwise, we'll have to fetch all exercises (less efficient)
       }

@@ -152,13 +152,20 @@ function getWeeklyVolumeData(workouts: Workout[]) {
   workouts.forEach(workout => {
     const date = new Date(workout.date);
     const weekStart = getWeekStartDate(date);
-    const weekKey = weekStart.toISOString().split('T')[0];
-    
-    if (!weeklyVolume[weekKey]) {
-      weeklyVolume[weekKey] = 0;
+    // Ensure weekStart is a valid date
+    if (weekStart && !isNaN(weekStart.getTime())) {
+      const weekKey = weekStart.toISOString().split('T')[0];
+      
+      // Initialize if needed
+      if (weekKey && !weeklyVolume[weekKey]) {
+        weeklyVolume[weekKey] = 0;
+      }
+      
+      // Only add if we have a valid key
+      if (weekKey && weeklyVolume[weekKey] !== undefined) {
+        weeklyVolume[weekKey] += calculateWorkoutVolume(workout);
+      }
     }
-    
-    weeklyVolume[weekKey] += calculateWorkoutVolume(workout);
   });
   
   // Convert to array and sort by date
