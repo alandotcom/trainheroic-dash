@@ -323,13 +323,17 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
       )}
 
       <div className="rounded-md border overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
+        <div className="overflow-x-auto max-w-full">
+          <Table className="w-full table-fixed">
             <TableHeader>
               <TableRow>
-                <TableHead className="whitespace-nowrap">Date</TableHead>
-                <TableHead className="whitespace-nowrap">Exercises</TableHead>
-                <TableHead className="whitespace-nowrap">Volume</TableHead>
+                <TableHead className="whitespace-nowrap w-1/3">Date</TableHead>
+                <TableHead className="whitespace-nowrap w-1/3">
+                  Exercises
+                </TableHead>
+                <TableHead className="whitespace-nowrap w-1/3">
+                  Volume
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -361,12 +365,12 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
                       }`}
                       onClick={() => toggleWorkoutExpand(workout)}
                     >
-                      <TableCell className="font-medium whitespace-nowrap">
+                      <TableCell className="font-medium whitespace-nowrap w-1/3 min-w-[100px]">
                         {searchQuery
                           ? highlightText(formatDate(workout.date), searchQuery)
                           : formatDate(workout.date)}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">
+                      <TableCell className="whitespace-nowrap w-1/3 min-w-[80px]">
                         {workout.exercises.length}{" "}
                         <span className="hidden xs:inline">
                           {workout.exercises.length === 1
@@ -374,7 +378,7 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
                             : "exercises"}
                         </span>
                       </TableCell>
-                      <TableCell className="flex justify-between items-center whitespace-nowrap">
+                      <TableCell className="flex justify-between items-center whitespace-nowrap w-1/3 min-w-[100px]">
                         <span>
                           {searchQuery
                             ? highlightText(
@@ -399,83 +403,91 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
                       <TableRow>
                         <TableCell colSpan={3} className="bg-muted/50 p-0">
                           <div className="p-2 sm:p-4">
-                            <h3 className="font-bold text-lg mb-2 sm:mb-4">
-                              Workout Details
-                            </h3>
+                            <div className="w-full overflow-x-auto">
+                              <h3 className="font-bold text-lg mb-2 sm:mb-4">
+                                Workout Details
+                              </h3>
 
-                            <div className="space-y-3 sm:space-y-4">
-                              {workout.exercises.map((exercise, index) => (
-                                <div
-                                  key={exercise.id}
-                                  className="border rounded-lg p-3 sm:p-4 bg-background"
-                                >
-                                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
-                                    <div>
-                                      <div className="font-semibold text-base sm:text-lg flex items-center">
-                                        <Dumbbell className="mr-1 sm:mr-2 h-4 w-4" />
-                                        {searchQuery &&
-                                        exercise.title
-                                          .toLowerCase()
-                                          .includes(searchQuery.toLowerCase())
-                                          ? highlightText(
-                                              exercise.title,
-                                              searchQuery
-                                            )
-                                          : exercise.title}
+                              <div className="space-y-3 sm:space-y-4">
+                                {workout.exercises.map((exercise, index) => (
+                                  <div
+                                    key={exercise.id}
+                                    className="border rounded-lg p-3 sm:p-4 bg-background min-w-[280px]"
+                                  >
+                                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
+                                      <div className="min-w-0 flex-1 max-w-full">
+                                        <div className="font-semibold text-base sm:text-lg flex items-center">
+                                          <Dumbbell className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
+                                          <span className="overflow-hidden text-ellipsis whitespace-nowrap block">
+                                            {searchQuery &&
+                                            exercise.title
+                                              .toLowerCase()
+                                              .includes(
+                                                searchQuery.toLowerCase()
+                                              )
+                                              ? highlightText(
+                                                  exercise.title,
+                                                  searchQuery
+                                                )
+                                              : exercise.title}
+                                          </span>
+                                        </div>
+
+                                        {exercise.bestEstimated1RM && (
+                                          <Badge
+                                            variant="outline"
+                                            className="mt-1"
+                                          >
+                                            Est. 1RM:{" "}
+                                            {Math.round(
+                                              exercise.bestEstimated1RM
+                                            )}{" "}
+                                            lbs
+                                          </Badge>
+                                        )}
                                       </div>
 
-                                      {exercise.bestEstimated1RM && (
-                                        <Badge
-                                          variant="outline"
-                                          className="mt-1"
-                                        >
-                                          Est. 1RM:{" "}
-                                          {Math.round(
-                                            exercise.bestEstimated1RM
-                                          )}{" "}
-                                          lbs
-                                        </Badge>
-                                      )}
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation(); // Prevent row click
+                                          openExerciseDetails(exercise);
+                                        }}
+                                        className="w-full sm:w-auto justify-center"
+                                      >
+                                        <Info className="h-4 w-4 mr-1" />
+                                        Details
+                                      </Button>
                                     </div>
 
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation(); // Prevent row click
-                                        openExerciseDetails(exercise);
-                                      }}
-                                      className="w-full sm:w-auto justify-center"
-                                    >
-                                      <Info className="h-4 w-4 mr-1" />
-                                      Details
-                                    </Button>
-                                  </div>
-
-                                  <div className="mt-3 grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
-                                    {exercise.sets.map((set, setIndex) => (
-                                      <div
-                                        key={
-                                          set.savedWorkoutSetExerciseId
-                                            ? `set-${set.savedWorkoutSetExerciseId}-${set.setNumber}`
-                                            : `${exercise.id}-set-${set.setNumber}-${setIndex}`
-                                        }
-                                        className="bg-muted p-2 rounded-md text-sm"
-                                      >
-                                        <div className="font-medium">
-                                          Set {set.setNumber}
-                                        </div>
-                                        <div>
-                                          {set.rawValue1 || "0"} reps
-                                          {set.rawValue2
-                                            ? ` @ ${set.rawValue2} lbs`
-                                            : ""}
-                                        </div>
+                                    <div className="mt-3">
+                                      <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                                        {exercise.sets.map((set, setIndex) => (
+                                          <div
+                                            key={
+                                              set.savedWorkoutSetExerciseId
+                                                ? `set-${set.savedWorkoutSetExerciseId}-${set.setNumber}`
+                                                : `${exercise.id}-set-${set.setNumber}-${setIndex}`
+                                            }
+                                            className="bg-muted p-1.5 sm:p-2 rounded-md text-xs sm:text-sm"
+                                          >
+                                            <div className="font-medium">
+                                              Set {set.setNumber}
+                                            </div>
+                                            <div>
+                                              {set.rawValue1 || "0"} reps
+                                              {set.rawValue2
+                                                ? ` @ ${set.rawValue2} lbs`
+                                                : ""}
+                                            </div>
+                                          </div>
+                                        ))}
                                       </div>
-                                    ))}
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
+                                ))}
+                              </div>
                             </div>
                           </div>
                         </TableCell>
