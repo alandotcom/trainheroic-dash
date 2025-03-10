@@ -7,8 +7,9 @@ interface CacheData {
   data: any;
 }
 
-// Cache expiration time (24 hours in milliseconds)
-const CACHE_EXPIRATION = 24 * 60 * 60 * 1000;
+// Auth cache expiration time (24 hours in milliseconds)
+// We no longer expire workout data as past workouts don't change
+const AUTH_CACHE_EXPIRATION = 24 * 60 * 60 * 1000;
 
 // LocalStorage cache keys
 const CACHE_KEYS = {
@@ -37,7 +38,7 @@ const saveToCache = (key: string, data: any): void => {
 /**
  * Retrieves data from localStorage
  * @param key The localStorage key
- * @returns The cached data or null if not found/expired
+ * @returns The cached data or null if not found
  */
 const getFromCache = <T>(key: string): { data: T; timestamp: number } | null => {
   try {
@@ -45,14 +46,8 @@ const getFromCache = <T>(key: string): { data: T; timestamp: number } | null => 
     if (!cached) return null;
     
     const cacheData = JSON.parse(cached) as CacheData;
-    const now = Date.now();
     
-    // Check if cache is expired
-    if (now - cacheData.timestamp > CACHE_EXPIRATION) {
-      localStorage.removeItem(key);
-      return null;
-    }
-    
+    // For workout data, we don't expire the cache since past workouts don't change
     return cacheData as { data: T; timestamp: number };
   } catch (error) {
     console.warn('Failed to retrieve from localStorage:', error);
