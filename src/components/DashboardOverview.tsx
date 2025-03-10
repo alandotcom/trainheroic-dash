@@ -17,7 +17,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { Calendar, Dumbbell, } from "lucide-react";
+import { Calendar, Dumbbell } from "lucide-react";
 import type { Workout } from "../../api";
 import { calculateWorkoutVolume } from "../workoutUtils";
 
@@ -32,7 +32,6 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ workouts }) => {
     (total, workout) => total + workout.exercises.length,
     0
   );
-  
 
   // Get most recent workout
   const mostRecentWorkout = workouts[0];
@@ -48,40 +47,36 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ workouts }) => {
   ).size;
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-4">
-        <Card>
-          <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
-            <CardTitle className="text-xs sm:text-sm font-medium">
+    <div className="space-y-5">
+      <div className="grid grid-cols-1 xs:grid-cols-2 gap-4">
+        <Card className="h-full">
+          <CardHeader className="pb-1 px-4 pt-4">
+            <CardTitle className="text-responsive font-medium">
               Total Workouts
             </CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              Lifetime
-            </CardDescription>
+            <CardDescription className="text-xs">Lifetime</CardDescription>
           </CardHeader>
-          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+          <CardContent className="px-4 pb-4">
             <div className="flex items-center">
               <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
-              <div className="text-xl sm:text-2xl font-bold">
+              <div className="text-xl xs:text-2xl font-bold">
                 {totalWorkouts}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
-            <CardTitle className="text-xs sm:text-sm font-medium">
+        <Card className="h-full">
+          <CardHeader className="pb-1 px-4 pt-4">
+            <CardTitle className="text-responsive font-medium">
               Total Exercises
             </CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              All workouts
-            </CardDescription>
+            <CardDescription className="text-xs">All workouts</CardDescription>
           </CardHeader>
-          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+          <CardContent className="px-4 pb-4">
             <div className="flex items-center flex-wrap gap-y-1">
               <Dumbbell className="h-4 w-4 text-muted-foreground mr-2" />
-              <div className="text-xl sm:text-2xl font-bold">
+              <div className="text-xl xs:text-2xl font-bold">
                 {totalExercises}
               </div>
               <Badge variant="outline" className="ml-2 text-xs">
@@ -92,22 +87,20 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ workouts }) => {
         </Card>
       </div>
 
-      <Tabs defaultValue="volume">
+      <Tabs defaultValue="volume" className="w-full overflow-hidden">
         <TabsList className="grid w-full grid-cols-2 text-xs sm:text-sm">
           <TabsTrigger value="volume">Volume Over Time</TabsTrigger>
           <TabsTrigger value="recent">Recent Progress</TabsTrigger>
         </TabsList>
-        <TabsContent value="volume" className="space-y-4">
-          <Card>
-            <CardHeader className="px-2 sm:px-6 pt-3 sm:pt-6 pb-1 sm:pb-3">
-              <CardTitle className="text-base sm:text-lg">
-                Weekly Volume
-              </CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
+        <TabsContent value="volume" className="space-y-4 mt-3">
+          <Card className="overflow-hidden">
+            <CardHeader className="px-4 pt-4 pb-2">
+              <CardTitle className="text-responsive">Weekly Volume</CardTitle>
+              <CardDescription className="text-xs">
                 Pounds lifted each week
               </CardDescription>
             </CardHeader>
-            <CardContent className="h-60 sm:h-80 px-0 sm:px-6 pb-2 sm:pb-6">
+            <CardContent className="h-56 xs:h-60 sm:h-80 px-0 pb-4 table-responsive">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={weeklyVolumeData}
@@ -115,7 +108,7 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ workouts }) => {
                 >
                   <XAxis
                     dataKey="week"
-                    fontSize={12}
+                    fontSize={10}
                     tickFormatter={(value) => {
                       // On mobile, show abbreviated dates
                       const isSmallScreen = window.innerWidth < 640;
@@ -127,13 +120,15 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ workouts }) => {
                       }
                       return value;
                     }}
+                    tick={{ fontSize: 10 }}
                   />
-                  <YAxis width={45} fontSize={12} />
+                  <YAxis width={40} fontSize={10} />
                   <Tooltip
                     formatter={(value) => [
                       `${value.toLocaleString()} lbs`,
                       "Volume",
                     ]}
+                    contentStyle={{ fontSize: "12px" }}
                   />
                   <Bar dataKey="volume" fill="#8884d8" name="Volume (lbs)" />
                 </BarChart>
@@ -141,24 +136,22 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ workouts }) => {
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="recent">
+        <TabsContent value="recent" className="mt-3">
           <Card>
-            <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-2 sm:pb-3">
-              <CardTitle className="text-base sm:text-lg">
-                Recent Progress
-              </CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
+            <CardHeader className="px-4 pt-4 pb-2">
+              <CardTitle className="text-responsive">Recent Progress</CardTitle>
+              <CardDescription className="text-xs">
                 Your last workout (
                 {mostRecentWorkout &&
                   new Date(mostRecentWorkout.date).toLocaleDateString()}
                 )
               </CardDescription>
             </CardHeader>
-            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <CardContent className="px-4 pb-4">
               {mostRecentWorkout && (
-                <div className="space-y-3 sm:space-y-4">
+                <div className="space-y-4">
                   <div>
-                    <div className="flex justify-between mb-1 text-xs sm:text-sm">
+                    <div className="flex justify-between mb-1 text-xs">
                       <span>
                         Volume:{" "}
                         {calculateWorkoutVolume(
@@ -173,13 +166,13 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ workouts }) => {
                     <Progress value={75} className="h-2" />
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {mostRecentWorkout.exercises.map((exercise) => (
-                      <div key={exercise.id} className="border p-2 rounded-md">
-                        <div className="font-medium text-sm sm:text-base truncate">
+                      <div key={exercise.id} className="border p-3 rounded-md">
+                        <div className="font-medium text-responsive truncate">
                           {exercise.title}
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-xs text-muted-foreground mt-1">
                           {exercise.sets
                             .map(
                               (set) =>
@@ -190,7 +183,7 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ workouts }) => {
                             .join(", ")}
                         </div>
                         {exercise.bestEstimated1RM && (
-                          <div className="text-xs flex items-center mt-1">
+                          <div className="text-xs flex items-center mt-2">
                             <Badge variant="secondary" className="text-xs">
                               1RM: {exercise.bestEstimated1RM} lbs
                             </Badge>
