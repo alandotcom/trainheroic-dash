@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
-    "deploy": "bunx wrangler pages publish dist"
+    "compile": "bunx tsc --noEmit",
+    "deploy": "bun run compile && bun run build && bunx wrangler pages publish dist"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.12",
