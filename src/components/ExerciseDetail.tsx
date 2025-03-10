@@ -16,8 +16,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import type { WorkoutExercise, Workout, ExerciseSet } from "../../api";
-import { ChevronUp, ChevronDown, TrendingUp, Award } from "lucide-react";
+import type { WorkoutExercise, Workout, } from "../../api";
+import { Award } from "lucide-react";
 
 interface ExerciseDetailProps {
   exercise: WorkoutExercise;

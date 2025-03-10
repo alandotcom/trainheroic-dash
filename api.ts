@@ -1,7 +1,7 @@
 import type { paths } from "./train-heroic-schema";
 import createClient from "openapi-fetch";
 import type { Middleware } from "openapi-fetch";
-import type { IterableElement, PickDeep, RequiredDeep } from "type-fest";
+import type { IterableElement, RequiredDeep } from "type-fest";
 
 // Constants
 // Not required for anything but just keeping here. This is the Deuce GPP team ID

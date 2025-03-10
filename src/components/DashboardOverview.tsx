@@ -17,7 +17,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { Calendar, Dumbbell, TrendingUp } from "lucide-react";
+import { Calendar, Dumbbell, } from "lucide-react";
 import type { Workout } from "../../api";
 import { calculateWorkoutVolume } from "../workoutUtils";
 
@@ -32,10 +32,7 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ workouts }) => {
     (total, workout) => total + workout.exercises.length,
     0
   );
-  const totalVolume = workouts.reduce(
-    (total, workout) => total + calculateWorkoutVolume(workout),
-    0
-  );
+  
 
   // Get most recent workout
   const mostRecentWorkout = workouts[0];

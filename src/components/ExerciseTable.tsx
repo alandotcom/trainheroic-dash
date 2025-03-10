@@ -1,15 +1,9 @@
 import { useState, useMemo } from "react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./ui/table";
+  } from "./ui/table";
 import { Card } from "./ui/card";
 import { Input } from "./ui/input";
-import { Dialog } from "./ui/dialog";
+
 import { ChevronRight } from "lucide-react";
 import type { Workout, WorkoutExercise } from "../../api";
 import ExerciseDetail from "./ExerciseDetail";

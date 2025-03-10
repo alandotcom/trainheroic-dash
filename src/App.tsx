@@ -26,7 +26,7 @@ const App: React.FC = () => {
   // Workout data state
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
-  const [dataError, setDataError] = useState<string | null>(null);
+  const [dataError] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
 
   // Load saved state from localStorage on component mount

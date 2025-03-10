@@ -14,7 +14,7 @@ interface CacheData {
 
 // Auth cache expiration time (24 hours in milliseconds)
 // We no longer expire workout data as past workouts don't change
-const AUTH_CACHE_EXPIRATION = 24 * 60 * 60 * 1000;
+
 
 // LocalStorage cache keys
 const CACHE_KEYS = {
