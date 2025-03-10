@@ -330,6 +330,20 @@ export type ExercisePRs = RequiredDeep<
   Awaited<ReturnType<typeof getExerciseHistory>>
 >["data"]["liftPRs"];
 
+export const getRecentWorkouts = (
+  sessionToken: string,
+  startDate: string,
+  endDate: string,
+) =>
+  client.GET("/3.0/athlete/programworkout/range", {
+    ...makeDefaultOptions(sessionToken),
+    params: { query: { startDate, endDate } },
+  });
+
+export type RecentWorkout = IterableElement<
+  RequiredDeep<Awaited<ReturnType<typeof getRecentWorkouts>>>["data"]
+>;
+
 /*
  * API Response Field Definitions:
  *

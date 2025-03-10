@@ -6,6 +6,823 @@ servers:
   - url: https://api.trainheroic.com
     description: The default server
 paths:
+  /3.0/athlete/programworkout/range:
+    get:
+      summary: GET range
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: number
+                    program_id:
+                      type: number
+                    workout_id:
+                      type: number
+                    workout_title:
+                      type: string
+                    year:
+                      type: number
+                    month:
+                      type: number
+                    day:
+                      type: number
+                    date:
+                      type: string
+                    group_team_subscription_id:
+                      type: object
+                      nullable: true
+                    feed_item_id:
+                      type: number
+                    summarizedSavedWorkout:
+                      type: object
+                      properties:
+                        workout:
+                          type: object
+                          properties:
+                            id:
+                              type: number
+                            title:
+                              type: string
+                            instruction:
+                              type: object
+                              nullable: true
+                            created_on:
+                              type: string
+                            updated_on:
+                              type: string
+                            workoutSets:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: number
+                                  workout_id:
+                                    type: number
+                                  title:
+                                    type: string
+                                  phase:
+                                    type: number
+                                  order:
+                                    type: number
+                                  instruction:
+                                    type: string
+                                  is_test:
+                                    type: number
+                                  is_redzone:
+                                    type: number
+                                  test_instruction:
+                                    type: string
+                                  plain_text:
+                                    type: number
+                                  redzone_instruction:
+                                    type: string
+                                  redzone_type:
+                                    type: number
+                                  resets_working_max:
+                                    type: object
+                                    nullable: true
+                                  smaller_is_better:
+                                    type: object
+                                    nullable: true
+                                  source_id:
+                                    type: object
+                                    nullable: true
+                                  tracker_id:
+                                    type: object
+                                    nullable: true
+                                  updated_by:
+                                    type: object
+                                    nullable: true
+                                  updated_on:
+                                    type: object
+                                    nullable: true
+                                  workout_combo_id:
+                                    type: object
+                                    nullable: true
+                                  is_power:
+                                    type: number
+                                  is_speed:
+                                    type: number
+                                  is_agility:
+                                    type: number
+                                  is_endurance:
+                                    type: number
+                                  is_power_endurance:
+                                    type: number
+                                  is_strength:
+                                    type: number
+                                  test_type:
+                                    type: number
+                                  is_set:
+                                    type: number
+                                  type:
+                                    type: number
+                                  typeClass:
+                                    type: string
+                                  workoutSetExercises:
+                                    type: array
+                                    items:
+                                      type: object
+                                      properties:
+                                        id:
+                                          type: number
+                                        set_id:
+                                          type: number
+                                        exercise_id:
+                                          type: number
+                                        order:
+                                          type: number
+                                        title:
+                                          type: string
+                                        instruction:
+                                          type: string
+                                        no_sets:
+                                          type: number
+                                        param_1_type:
+                                          type: number
+                                        param_2_type:
+                                          type: number
+                                        param_1_data_1:
+                                          type: string
+                                        param_1_data_2:
+                                          type: string
+                                        param_1_data_3:
+                                          type: string
+                                        param_1_data_4:
+                                          type: string
+                                        param_1_data_5:
+                                          type: string
+                                        param_1_data_6:
+                                          type: string
+                                        param_1_data_7:
+                                          type: string
+                                        param_1_data_8:
+                                          type: string
+                                        param_1_data_9:
+                                          type: string
+                                        param_1_data_10:
+                                          type: string
+                                        param_2_data_1:
+                                          type: string
+                                        param_2_data_2:
+                                          type: string
+                                        param_2_data_3:
+                                          type: string
+                                        param_2_data_4:
+                                          type: string
+                                        param_2_data_5:
+                                          type: string
+                                        param_2_data_6:
+                                          type: string
+                                        param_2_data_7:
+                                          type: string
+                                        param_2_data_8:
+                                          type: string
+                                        param_2_data_9:
+                                          type: string
+                                        param_2_data_10:
+                                          type: string
+                                        reference_max_exercise_id:
+                                          type: number
+                                        workout_set_exercise_template_id:
+                                          type: object
+                                          nullable: true
+                                        param_count:
+                                          type: number
+                                        video_url:
+                                          type: string
+                                        video_thumbnail:
+                                          type: string
+                                  exercises:
+                                    type: array
+                                    items:
+                                      type: object
+                                      properties:
+                                        id:
+                                          type: number
+                                        set_id:
+                                          type: number
+                                        exercise_id:
+                                          type: number
+                                        order:
+                                          type: number
+                                        title:
+                                          type: string
+                                        instruction:
+                                          type: string
+                                        no_sets:
+                                          type: number
+                                        param_1_type:
+                                          type: number
+                                        param_2_type:
+                                          type: number
+                                        param_1_data_1:
+                                          type: string
+                                        param_1_data_2:
+                                          type: string
+                                        param_1_data_3:
+                                          type: string
+                                        param_1_data_4:
+                                          type: string
+                                        param_1_data_5:
+                                          type: string
+                                        param_1_data_6:
+                                          type: string
+                                        param_1_data_7:
+                                          type: string
+                                        param_1_data_8:
+                                          type: string
+                                        param_1_data_9:
+                                          type: string
+                                        param_1_data_10:
+                                          type: string
+                                        param_2_data_1:
+                                          type: string
+                                        param_2_data_2:
+                                          type: string
+                                        param_2_data_3:
+                                          type: string
+                                        param_2_data_4:
+                                          type: string
+                                        param_2_data_5:
+                                          type: string
+                                        param_2_data_6:
+                                          type: string
+                                        param_2_data_7:
+                                          type: string
+                                        param_2_data_8:
+                                          type: string
+                                        param_2_data_9:
+                                          type: string
+                                        param_2_data_10:
+                                          type: string
+                                        reference_max_exercise_id:
+                                          type: number
+                                        workout_set_exercise_template_id:
+                                          type: object
+                                          nullable: true
+                                        param_count:
+                                          type: number
+                                        video_url:
+                                          type: string
+                                        video_thumbnail:
+                                          type: string
+                                  block_title:
+                                    type: string
+                            exercises:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: number
+                                  workout_id:
+                                    type: number
+                                  title:
+                                    type: string
+                                  phase:
+                                    type: number
+                                  order:
+                                    type: number
+                                  instruction:
+                                    type: string
+                                  is_test:
+                                    type: number
+                                  is_redzone:
+                                    type: number
+                                  test_instruction:
+                                    type: string
+                                  plain_text:
+                                    type: number
+                                  redzone_instruction:
+                                    type: string
+                                  redzone_type:
+                                    type: number
+                                  resets_working_max:
+                                    type: object
+                                    nullable: true
+                                  smaller_is_better:
+                                    type: object
+                                    nullable: true
+                                  source_id:
+                                    type: object
+                                    nullable: true
+                                  tracker_id:
+                                    type: object
+                                    nullable: true
+                                  updated_by:
+                                    type: object
+                                    nullable: true
+                                  updated_on:
+                                    type: object
+                                    nullable: true
+                                  workout_combo_id:
+                                    type: object
+                                    nullable: true
+                                  is_power:
+                                    type: number
+                                  is_speed:
+                                    type: number
+                                  is_agility:
+                                    type: number
+                                  is_endurance:
+                                    type: number
+                                  is_power_endurance:
+                                    type: number
+                                  is_strength:
+                                    type: number
+                                  test_type:
+                                    type: number
+                                  is_set:
+                                    type: number
+                                  type:
+                                    type: number
+                                  typeClass:
+                                    type: string
+                                  workoutSetExercises:
+                                    type: array
+                                    items:
+                                      type: object
+                                      properties:
+                                        id:
+                                          type: number
+                                        set_id:
+                                          type: number
+                                        exercise_id:
+                                          type: number
+                                        order:
+                                          type: number
+                                        title:
+                                          type: string
+                                        instruction:
+                                          type: string
+                                        no_sets:
+                                          type: number
+                                        param_1_type:
+                                          type: number
+                                        param_2_type:
+                                          type: number
+                                        param_1_data_1:
+                                          type: string
+                                        param_1_data_2:
+                                          type: string
+                                        param_1_data_3:
+                                          type: string
+                                        param_1_data_4:
+                                          type: string
+                                        param_1_data_5:
+                                          type: string
+                                        param_1_data_6:
+                                          type: string
+                                        param_1_data_7:
+                                          type: string
+                                        param_1_data_8:
+                                          type: string
+                                        param_1_data_9:
+                                          type: string
+                                        param_1_data_10:
+                                          type: string
+                                        param_2_data_1:
+                                          type: string
+                                        param_2_data_2:
+                                          type: string
+                                        param_2_data_3:
+                                          type: string
+                                        param_2_data_4:
+                                          type: string
+                                        param_2_data_5:
+                                          type: string
+                                        param_2_data_6:
+                                          type: string
+                                        param_2_data_7:
+                                          type: string
+                                        param_2_data_8:
+                                          type: string
+                                        param_2_data_9:
+                                          type: string
+                                        param_2_data_10:
+                                          type: string
+                                        reference_max_exercise_id:
+                                          type: number
+                                        workout_set_exercise_template_id:
+                                          type: object
+                                          nullable: true
+                                        param_count:
+                                          type: number
+                                        video_url:
+                                          type: string
+                                        video_thumbnail:
+                                          type: string
+                                  exercises:
+                                    type: array
+                                    items:
+                                      type: object
+                                      properties:
+                                        id:
+                                          type: number
+                                        set_id:
+                                          type: number
+                                        exercise_id:
+                                          type: number
+                                        order:
+                                          type: number
+                                        title:
+                                          type: string
+                                        instruction:
+                                          type: string
+                                        no_sets:
+                                          type: number
+                                        param_1_type:
+                                          type: number
+                                        param_2_type:
+                                          type: number
+                                        param_1_data_1:
+                                          type: string
+                                        param_1_data_2:
+                                          type: string
+                                        param_1_data_3:
+                                          type: string
+                                        param_1_data_4:
+                                          type: string
+                                        param_1_data_5:
+                                          type: string
+                                        param_1_data_6:
+                                          type: string
+                                        param_1_data_7:
+                                          type: string
+                                        param_1_data_8:
+                                          type: string
+                                        param_1_data_9:
+                                          type: string
+                                        param_1_data_10:
+                                          type: string
+                                        param_2_data_1:
+                                          type: string
+                                        param_2_data_2:
+                                          type: string
+                                        param_2_data_3:
+                                          type: string
+                                        param_2_data_4:
+                                          type: string
+                                        param_2_data_5:
+                                          type: string
+                                        param_2_data_6:
+                                          type: string
+                                        param_2_data_7:
+                                          type: string
+                                        param_2_data_8:
+                                          type: string
+                                        param_2_data_9:
+                                          type: string
+                                        param_2_data_10:
+                                          type: string
+                                        reference_max_exercise_id:
+                                          type: number
+                                        workout_set_exercise_template_id:
+                                          type: object
+                                          nullable: true
+                                        param_count:
+                                          type: number
+                                        video_url:
+                                          type: string
+                                        video_thumbnail:
+                                          type: string
+                                  block_title:
+                                    type: string
+                        saved_workout:
+                          type: object
+                          properties:
+                            id:
+                              type: number
+                            user_id:
+                              type: number
+                            program_workout_id:
+                              type: number
+                            user_full_name:
+                              type: string
+                            name_last:
+                              type: string
+                            use_metric:
+                              type: number
+                            workout_id:
+                              type: number
+                            title:
+                              type: string
+                            instruction:
+                              type: object
+                              nullable: true
+                            completed:
+                              type: number
+                            date_completed:
+                              type: string
+                            workout_rating:
+                              type: string
+                            notes:
+                              type: string
+                            status:
+                              type: number
+                            statusMessage:
+                              type: string
+                            version:
+                              type: number
+                            notes_on_feed:
+                              type: number
+                            percent_completed:
+                              type: number
+                            set_count:
+                              type: number
+                            rpe:
+                              type: object
+                              nullable: true
+                            timestamp_updated:
+                              type: number
+                            timestamp_started:
+                              type: number
+                            timestamp_completed:
+                              type: object
+                              nullable: true
+                            timestamp_rpe:
+                              type: object
+                              nullable: true
+                            date_rescheduled:
+                              type: object
+                              nullable: true
+                            addedWorkoutSets:
+                              type: array
+                              items: {}
+                            workoutSets:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: number
+                                  plain_text:
+                                    type: number
+                                  saved_workout_id:
+                                    type: number
+                                  workout_set_id:
+                                    type: number
+                                  title:
+                                    type: string
+                                  version:
+                                    type: number
+                                  is_super_set:
+                                    type: number
+                                  test_instruction:
+                                    type: string
+                                  is_power:
+                                    type: number
+                                  is_speed:
+                                    type: number
+                                  is_agility:
+                                    type: number
+                                  is_endurance:
+                                    type: number
+                                  is_power_endurance:
+                                    type: number
+                                  is_strength:
+                                    type: number
+                                  test_type:
+                                    type: number
+                                  test_data_1:
+                                    type: string
+                                  test_data_2:
+                                    type: string
+                                  this_workout_rz:
+                                    type: number
+                                  rx:
+                                    type: number
+                                  completed:
+                                    type: number
+                                  date_completed:
+                                    type: string
+                                  date_updated:
+                                    type: string
+                                  notes:
+                                    type: object
+                                    nullable: true
+                                  workout_percent_completed:
+                                    type: number
+                                  order:
+                                    type: number
+                                  phase:
+                                    type: number
+                                  exercise_count:
+                                    type: number
+                                  is_test:
+                                    type: number
+                                  instruction:
+                                    type: string
+                                  has_history:
+                                    type: boolean
+                                  workoutSetExercises:
+                                    type: array
+                                    items:
+                                      type: object
+                                      properties:
+                                        id:
+                                          type: number
+                                        saved_workout_set_id:
+                                          type: number
+                                        workout_set_exercise_id:
+                                          type: number
+                                        exercise_title:
+                                          type: string
+                                        exercise_id:
+                                          type: number
+                                        has_history:
+                                          type: boolean
+                                        notes:
+                                          type: object
+                                          nullable: true
+                                        instruction:
+                                          type: string
+                                        order:
+                                          type: number
+                                        no_sets:
+                                          type: number
+                                        tips:
+                                          type: string
+                                        prescribed_abr:
+                                          type: string
+                                        abr:
+                                          type: string
+                                        abr_kg:
+                                          type: string
+                                        abr_results:
+                                          type: string
+                                        video_url:
+                                          type: string
+                                        param_count:
+                                          type: number
+                                        completed:
+                                          type: number
+                                        param_1_type:
+                                          type: number
+                                        param_1_data_1:
+                                          type: string
+                                        param_1_made:
+                                          type: number
+                                        param_1_data_1_prescribed:
+                                          type: string
+                                        param_1_data_2:
+                                          type: string
+                                        param_2_made:
+                                          type: number
+                                        param_1_data_2_prescribed:
+                                          type: string
+                                        param_1_data_3:
+                                          type: string
+                                        param_3_made:
+                                          type: number
+                                        param_1_data_3_prescribed:
+                                          type: string
+                                        param_1_data_4:
+                                          type: string
+                                        param_4_made:
+                                          type: number
+                                        param_1_data_4_prescribed:
+                                          type: string
+                                        param_1_data_5:
+                                          type: string
+                                        param_5_made:
+                                          type: number
+                                        param_1_data_5_prescribed:
+                                          type: string
+                                        param_1_data_6:
+                                          type: string
+                                        param_6_made:
+                                          type: number
+                                        param_1_data_6_prescribed:
+                                          type: string
+                                        param_1_data_7:
+                                          type: string
+                                        param_7_made:
+                                          type: number
+                                        param_1_data_7_prescribed:
+                                          type: string
+                                        param_1_data_8:
+                                          type: string
+                                        param_8_made:
+                                          type: number
+                                        param_1_data_8_prescribed:
+                                          type: string
+                                        param_1_data_9:
+                                          type: string
+                                        param_9_made:
+                                          type: number
+                                        param_1_data_9_prescribed:
+                                          type: string
+                                        param_1_data_10:
+                                          type: string
+                                        param_10_made:
+                                          type: number
+                                        param_1_data_10_prescribed:
+                                          type: string
+                                        param_2_type:
+                                          type: number
+                                        param_2_data_1_prescribed:
+                                          type: string
+                                        param_2_data_1:
+                                          type: string
+                                        param_2_data_2_prescribed:
+                                          type: string
+                                        param_2_data_2:
+                                          type: string
+                                        param_2_data_3_prescribed:
+                                          type: string
+                                        param_2_data_3:
+                                          type: string
+                                        param_2_data_4_prescribed:
+                                          type: string
+                                        param_2_data_4:
+                                          type: string
+                                        param_2_data_5_prescribed:
+                                          type: string
+                                        param_2_data_5:
+                                          type: string
+                                        param_2_data_6_prescribed:
+                                          type: string
+                                        param_2_data_6:
+                                          type: string
+                                        param_2_data_7_prescribed:
+                                          type: string
+                                        param_2_data_7:
+                                          type: string
+                                        param_2_data_8_prescribed:
+                                          type: string
+                                        param_2_data_8:
+                                          type: string
+                                        param_2_data_9_prescribed:
+                                          type: string
+                                        param_2_data_9:
+                                          type: string
+                                        param_2_data_10_prescribed:
+                                          type: string
+                                        param_2_data_10:
+                                          type: string
+                            team_title:
+                              type: string
+                            team_logo:
+                              type: string
+                            date_pretty:
+                              type: string
+                            is_in_compliance_mode:
+                              type: boolean
+                        date:
+                          type: string
+                    personal_cal:
+                      type: boolean
+                    program_title:
+                      type: string
+                    team_id:
+                      type: number
+                    team_title:
+                      type: string
+                    team_logo:
+                      type: string
+                    team_org_id:
+                      type: object
+                      nullable: true
+                    coach_logo:
+                      type: string
+                    comments:
+                      type: object
+                      properties:
+                        streamId:
+                          type: object
+                          nullable: true
+                        lastActivityPreview:
+                          type: object
+                          nullable: true
+                        lastActivityUserPreview:
+                          type: object
+                          nullable: true
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: preview
+          in: query
+          required: false
+          schema:
+            type: string
   /auth:
     post:
       summary: POST auth

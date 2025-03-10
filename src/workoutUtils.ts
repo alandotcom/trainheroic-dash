@@ -1,4 +1,4 @@
-import { getExerciseHistory, getHistory, auth } from "../api";
+import { getExerciseHistory, getHistory, auth, getRecentWorkouts } from "../api";
 import type { ExerciseSet, Workout, Exercise } from "../api";
 
 // Cache structure
@@ -16,6 +16,7 @@ const CACHE_KEYS = {
   AUTH: 'trainheroic_auth_cache',
   EXERCISES: 'trainheroic_exercises_cache',
   EXERCISE_HISTORY_PREFIX: 'trainheroic_exercise_history_',
+  WORKOUTS: 'trainheroic_workouts',
 };
 
 /**
@@ -156,7 +157,27 @@ export const getWorkoutHistory = async (
   // Report progress after auth
   onProgress?.(10);
 
-  // Step 2: Get all exercises the user has done (with caching)
+  // First load all existing cached workouts
+  let existingWorkouts: Workout[] = [];
+  try {
+    const workoutsCache = localStorage.getItem(CACHE_KEYS.WORKOUTS);
+    if (workoutsCache) {
+      existingWorkouts = JSON.parse(workoutsCache);
+      console.log(`Found ${existingWorkouts.length} cached workouts`);
+    }
+  } catch (error) {
+    console.warn('Failed to retrieve cached workouts:', error);
+  }
+  
+  // Find the most recent workout date we have cached
+  let mostRecentDate = '1970-01-01';
+  if (existingWorkouts.length > 0) {
+    // Find the most recent date (workouts are already sorted newest first)
+    mostRecentDate = existingWorkouts[0].date;
+    console.log(`Most recent cached workout date: ${mostRecentDate}`);
+  }
+  
+  // Step 2: Get the exercise list which we need even for the optimized approach
   const exercises = await fetchWithCache<Exercise[]>(
     'exercises-list',
     'exercises',
@@ -173,13 +194,110 @@ export const getWorkoutHistory = async (
   
   // Report progress after fetching exercise list
   onProgress?.(20);
-
-  // Step 3: Create a map to store workouts by date
+  
+  // Create a map to store workouts by date
   const workoutsByDate: Record<string, Workout> = {};
-
-  // Step 4: Fetch exercise history concurrently with rate limiting
+  
+  // Pre-populate with existing workouts
+  existingWorkouts.forEach(workout => {
+    workoutsByDate[workout.date] = workout;
+  });
+  
   // Maximum number of concurrent requests
   const MAX_CONCURRENT_REQUESTS = 5;
+  
+  // Check if we have existing workouts and need to look for updates
+  if (existingWorkouts.length > 0) {
+    try {
+      onProgress?.(30);
+      
+      // Get today's date in YYYY-MM-DD format
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Check for workouts between the most recent cached date and today
+      console.log(`Checking for new workouts between ${mostRecentDate} and ${today}`);
+      
+      const recentWorkoutsResponse = await getRecentWorkouts(
+        sessionToken,
+        mostRecentDate, // Start from the most recent cached date
+        today           // Until today
+      );
+      
+      // If no recent workouts, we can just return the existing data
+      if (!recentWorkoutsResponse.data || recentWorkoutsResponse.data.length === 0) {
+        console.log('No new workouts found, using cached data');
+        onProgress?.(100); // Skip to 100% progress
+        return existingWorkouts;
+      }
+      
+      // We have recent workouts - extract which exercises we need to fetch
+      const recentWorkouts = recentWorkoutsResponse.data;
+      console.log(`Found ${recentWorkouts.length} recent workouts, checking for new ones`);
+      
+      // Filter the recent workouts to find truly new ones (that aren't in our cache)
+      const existingWorkoutIds = new Set(
+        existingWorkouts
+          .filter(w => w.programWorkoutId)
+          .map(w => w.programWorkoutId)
+      );
+      
+      const newWorkouts = recentWorkouts.filter(
+        w => !existingWorkoutIds.has(w.id)
+      );
+      
+      if (newWorkouts.length === 0) {
+        console.log('No new workouts found, using cached data');
+        onProgress?.(100); // Skip to 100% progress
+        return existingWorkouts;
+      }
+      
+      console.log(`Found ${newWorkouts.length} new workouts`);
+      
+      // We have new workouts - we need to fetch exercise history only for the exercises 
+      // in these new workouts to be efficient
+      
+      // First, look up which exercises were done in these new workouts
+      // We'll need to filter our exercise list to only include these
+      
+      // Get the exercises we need to fetch history for
+      if (newWorkouts.length > 0 && 'exercise_stats' in newWorkouts[0]) {
+        // Create a map to track which exercises we need to fetch
+        const exercisesToFetch = new Map<string, Exercise>();
+        
+        // Go through new workouts and mark the exercises used
+        for (const workout of newWorkouts) {
+          // The workout might include exercise_stats which tells us which exercises were included
+          if (workout.exercise_stats) {
+            for (const stat of workout.exercise_stats) {
+              if (stat.exercise_id) {
+                // Find the full exercise info from our exercise list
+                const exerciseInfo = exercises.find(
+                  e => String(e.id) === String(stat.exercise_id)
+                );
+                
+                if (exerciseInfo) {
+                  exercisesToFetch.set(String(exerciseInfo.id), exerciseInfo);
+                }
+              }
+            }
+          }
+        }
+        
+        // If we identified specific exercises, use only those
+        if (exercisesToFetch.size > 0) {
+          console.log(`Fetching history for ${exercisesToFetch.size} exercises used in new workouts`);
+          exercises = Array.from(exercisesToFetch.values());
+        } 
+        // Otherwise, we'll have to fetch all exercises (less efficient)
+      }
+      
+      // Now we'll proceed with fetching just the exercises we need
+      console.log(`Fetching history for ${exercises.length} exercises`);
+    } catch (error) {
+      console.warn('Error checking for new workouts:', error);
+      // Continue with full exercise fetch if we can't determine which ones to fetch
+    }
+  }
   
   // Process an exercise and return its history
   const processExercise = async (exercise: Exercise, index: number) => {
@@ -191,26 +309,26 @@ export const getWorkoutHistory = async (
     );
 
     try {
-      // Fetch exercise history with caching
-      const exerciseHistory = await fetchWithCache<any[]>(
+      // Get the exercise history to check for new entries
+      const exerciseHistoryResponse = await getExerciseHistory(
         exerciseId,
-        'exerciseHistory',
-        async () => {
-          const exerciseHistoryResponse = await getExerciseHistory(
-            exerciseId,
-            userId,
-            sessionToken
-          );
-          
-          if (!exerciseHistoryResponse.data?.history) {
-            console.warn(
-              `No history found for exercise ${exercise.title} (ID: ${exerciseId})`
-            );
-            return [];
-          }
-          
-          return exerciseHistoryResponse.data.history;
-        }
+        userId,
+        sessionToken
+      );
+      
+      if (!exerciseHistoryResponse.data?.history) {
+        console.warn(
+          `No history found for exercise ${exercise.title} (ID: ${exerciseId})`
+        );
+        return { exercise, exerciseHistory: [] };
+      }
+      
+      const exerciseHistory = exerciseHistoryResponse.data.history;
+      
+      // Cache the fresh exercise history for future use
+      saveToCache(
+        `${CACHE_KEYS.EXERCISE_HISTORY_PREFIX}${exerciseId}`,
+        exerciseHistory
       );
 
       console.log(
@@ -218,15 +336,34 @@ export const getWorkoutHistory = async (
       );
       
       // Report progress during exercise history fetching
-      const progressPercent = 20 + Math.floor(80 * (index + 1) / exercises.length);
+      const progressPercent = 40 + Math.floor(60 * (index + 1) / exercises.length);
       onProgress?.(progressPercent);
 
       return { exercise, exerciseHistory };
     } catch (error) {
       console.error(`Error fetching history for ${exercise.title}:`, error);
       
+      // On error, try to use cached data if available
+      try {
+        const cachedHistory = getFromCache<any[]>(
+          `${CACHE_KEYS.EXERCISE_HISTORY_PREFIX}${exerciseId}`
+        );
+        
+        if (cachedHistory) {
+          console.log(`Using cached history for ${exercise.title} due to fetch error`);
+          
+          // Report progress even when using cached data
+          const progressPercent = 40 + Math.floor(60 * (index + 1) / exercises.length);
+          onProgress?.(progressPercent);
+          
+          return { exercise, exerciseHistory: cachedHistory.data };
+        }
+      } catch (cacheError) {
+        console.warn(`Cache retrieval error for ${exercise.title}:`, cacheError);
+      }
+      
       // Report progress even on error
-      const progressPercent = 20 + Math.floor(80 * (index + 1) / exercises.length);
+      const progressPercent = 40 + Math.floor(60 * (index + 1) / exercises.length);
       onProgress?.(progressPercent);
       
       return { exercise, exerciseHistory: [] };
@@ -253,10 +390,10 @@ export const getWorkoutHistory = async (
     return results;
   };
   
-  // Process all exercises and populate the workoutsByDate map
+  // Process only the needed exercises and populate the workoutsByDate map
   const exerciseResults = await processExercisesInBatches();
   
-  // Step 5: Process each history entry for all exercises
+  // Process each history entry for all exercises
   for (const result of exerciseResults) {
     if (!result) continue;
     const { exercise, exerciseHistory } = result;
@@ -274,7 +411,7 @@ export const getWorkoutHistory = async (
           };
         }
 
-        // Add this exercise to the workout
+        // Add this exercise to the workout if it's not already there
         if (historyEntry.sets && Array.isArray(historyEntry.sets)) {
           // Ensure we have valid set data
           const validSets = historyEntry.sets.filter(
@@ -283,22 +420,42 @@ export const getWorkoutHistory = async (
 
           const workout = workoutsByDate[date];
           if (workout && exercise) {
-            workout.exercises.push({
-              id: exercise.id,
-              title: exercise.title,
-              sets: validSets,
-              bestEstimated1RM: historyEntry.bestEstimated1RM,
-            });
+            // Check if this exercise is already in the workout
+            const existingExerciseIndex = workout.exercises.findIndex(
+              e => e.id === exercise.id
+            );
+            
+            if (existingExerciseIndex === -1) {
+              // Add new exercise
+              workout.exercises.push({
+                id: exercise.id,
+                title: exercise.title,
+                sets: validSets,
+                bestEstimated1RM: historyEntry.bestEstimated1RM,
+              });
+            } else {
+              // For already existing exercises in cached workouts,
+              // we keep the existing data as past workouts don't change
+            }
           }
         }
       }
     }
   }
 
-  // Step 6: Convert the map to an array and sort by date (newest first)
-  return Object.values(workoutsByDate).sort(
+  // Convert the map to an array and sort by date (newest first)
+  const allWorkouts = Object.values(workoutsByDate).sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
+  
+  // Save all workouts to localStorage for fast loading next time
+  try {
+    localStorage.setItem(CACHE_KEYS.WORKOUTS, JSON.stringify(allWorkouts));
+  } catch (error) {
+    console.warn('Failed to save workouts to localStorage:', error);
+  }
+  
+  return allWorkouts;
 };
 
 /**

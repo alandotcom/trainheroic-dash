@@ -55,30 +55,66 @@ const App: React.FC = () => {
     try {
       setAuthLoading(true);
       setAuthError(null);
-      setLoadingProgress(0);
-
-      // Fetch workout data using credentials with progress updates
-      setDataLoading(true);
-      const allWorkouts = await getWorkoutHistory(
-        email, 
-        password,
-        (progress) => {
-          setLoadingProgress(progress);
-        }
-      );
-      setWorkouts(allWorkouts);
-
-      // Mark user as authenticated
-      setIsAuthenticated(true);
       
-      // Save state to localStorage
-      localStorage.setItem(STORAGE_KEYS.IS_AUTHENTICATED, 'true');
-      localStorage.setItem(STORAGE_KEYS.WORKOUTS, JSON.stringify(allWorkouts));
-    } catch (err) {
-      console.error("Login error:", err);
-      setAuthError(
-        "Authentication failed. Please check your email and password."
-      );
+      // Check for existing workouts in localStorage first
+      const savedWorkouts = localStorage.getItem(STORAGE_KEYS.WORKOUTS);
+      if (savedWorkouts) {
+        // If we have cached workouts, use them immediately
+        console.log("Using cached workout data");
+        setWorkouts(JSON.parse(savedWorkouts));
+        
+        // Mark user as authenticated immediately to improve UX
+        setIsAuthenticated(true);
+        localStorage.setItem(STORAGE_KEYS.IS_AUTHENTICATED, 'true');
+        setAuthLoading(false);
+        
+        // Then check for new workouts in the background - user won't see a loading screen
+        // but will see the progress indicator
+        try {
+          setLoadingProgress(0);
+          const allWorkouts = await getWorkoutHistory(
+            email, 
+            password,
+            (progress) => {
+              setLoadingProgress(progress);
+            }
+          );
+          
+          // Update with potentially new data
+          setWorkouts(allWorkouts);
+          localStorage.setItem(STORAGE_KEYS.WORKOUTS, JSON.stringify(allWorkouts));
+        } catch (fetchErr) {
+          console.warn("Couldn't update workout data, but using cached data:", fetchErr);
+          // Still using cached data, so don't show error to user
+        } finally {
+          setLoadingProgress(0);
+        }
+      } else {
+        // No cached data - need to fetch everything
+        try {
+          setLoadingProgress(0);
+          const allWorkouts = await getWorkoutHistory(
+            email, 
+            password,
+            (progress) => {
+              setLoadingProgress(progress);
+            }
+          );
+          setWorkouts(allWorkouts);
+
+          // Mark user as authenticated
+          setIsAuthenticated(true);
+          
+          // Save state to localStorage
+          localStorage.setItem(STORAGE_KEYS.IS_AUTHENTICATED, 'true');
+          localStorage.setItem(STORAGE_KEYS.WORKOUTS, JSON.stringify(allWorkouts));
+        } catch (err) {
+          console.error("Login error:", err);
+          setAuthError(
+            "Authentication failed. Please check your email and password."
+          );
+        }
+      }
     } finally {
       setAuthLoading(false);
       setDataLoading(false);
@@ -142,17 +178,6 @@ const App: React.FC = () => {
               </h2>
               <div className="flex items-center gap-2">
                 <Button
-                  onClick={handleClearCache}
-                  variant="outline"
-                  size="sm"
-                  className="gap-1 sm:gap-2"
-                  title="Clear cached data to fetch fresh information"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  <span className="hidden sm:inline">Refresh Data</span>
-                  <span className="sm:hidden">Refresh</span>
-                </Button>
-                <Button
                   onClick={handleLogout}
                   variant="destructive"
                   size="sm" 
@@ -165,47 +190,65 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {dataLoading ? (
-              <div className="flex flex-col justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
-                <Progress value={loadingProgress} className="w-full max-w-md mb-2 px-4" />
-                <div className="text-sm text-muted-foreground">
-                  Loading: {loadingProgress}% complete
-                </div>
-              </div>
-            ) : dataError ? (
+            {dataError ? (
               <div className="bg-destructive/10 text-destructive p-4 rounded-md">
                 {dataError}
               </div>
             ) : (
-              <Tabs defaultValue="dashboard" className="space-y-4 sm:space-y-6">
-                <TabsList className="grid w-full max-w-md sm:max-w-lg mx-auto grid-cols-3">
-                  <TabsTrigger value="dashboard" className="flex items-center gap-2">
-                    <LineChart className="h-4 w-4" />
-                    <span>Dashboard</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="history" className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    <span>Workout History</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="exercises" className="flex items-center gap-2">
-                    <Dumbbell className="h-4 w-4" />
-                    <span>Exercises</span>
-                  </TabsTrigger>
-                </TabsList>
+              <>
+                <div className="relative">
+                  {dataLoading && (
+                    <div className="absolute top-0 right-0 flex items-center p-2 z-10">
+                      <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-primary mr-2"></div>
+                      <div className="text-xs text-muted-foreground">
+                        Updating: {loadingProgress}%
+                      </div>
+                    </div>
+                  )}
+                  
+                  <Tabs defaultValue="dashboard" className="space-y-4 sm:space-y-6">
+                    <TabsList className="grid w-full max-w-md sm:max-w-lg mx-auto grid-cols-3">
+                      <TabsTrigger value="dashboard" className="flex items-center gap-2">
+                        <LineChart className="h-4 w-4" />
+                        <span>Dashboard</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="history" className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        <span>Workout History</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="exercises" className="flex items-center gap-2">
+                        <Dumbbell className="h-4 w-4" />
+                        <span>Exercises</span>
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="dashboard" className="mt-4 sm:mt-6">
+                      <DashboardOverview workouts={workouts} />
+                    </TabsContent>
+                    
+                    <TabsContent value="history" className="mt-4 sm:mt-6">
+                      <WorkoutTable workouts={workouts} />
+                    </TabsContent>
+                    
+                    <TabsContent value="exercises" className="mt-4 sm:mt-6">
+                      <ExerciseTable workouts={workouts} />
+                    </TabsContent>
+                  </Tabs>
+                </div>
                 
-                <TabsContent value="dashboard" className="mt-4 sm:mt-6">
-                  <DashboardOverview workouts={workouts} />
-                </TabsContent>
-                
-                <TabsContent value="history" className="mt-4 sm:mt-6">
-                  <WorkoutTable workouts={workouts} />
-                </TabsContent>
-                
-                <TabsContent value="exercises" className="mt-4 sm:mt-6">
-                  <ExerciseTable workouts={workouts} />
-                </TabsContent>
-              </Tabs>
+                <div className="mt-8 flex justify-center">
+                  <Button
+                    onClick={handleClearCache}
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-muted-foreground"
+                    title="Clear all cached data to reload fresh information"
+                  >
+                    <RefreshCw className="h-3 w-3 mr-1" />
+                    Reset Cache
+                  </Button>
+                </div>
+              </>
             )}
           </div>
         )}

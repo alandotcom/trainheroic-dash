@@ -6,7 +6,8 @@
     "schema-types": "bunx openapi-typescript ./train-heroic-schema.yml -o ./train-heroic-schema.d.ts",
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "deploy": "bunx wrangler pages publish dist"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.12",
