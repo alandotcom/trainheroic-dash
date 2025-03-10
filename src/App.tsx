@@ -174,10 +174,12 @@ const App: React.FC = () => {
     }
   };
 
-  // Clear cached data
+  // Clear cached data and log out
   const handleClearCache = () => {
     clearAllCaches();
-    alert("Cache cleared successfully");
+    setIsAuthenticated(false);
+    setWorkouts([]);
+    alert("Cache cleared successfully. You have been logged out.");
   };
 
   // Handle user logout

@@ -106,25 +106,30 @@ const fetchWithCache = async <T>(
 };
 
 /**
- * Clears all TrainHeroic caches from localStorage
+ * Clears all TrainHeroic caches and data from localStorage
+ * This resets the app to a fresh state
  */
 export const clearAllCaches = () => {
   try {
-    // Clear specific cache items
+    // Clear all TrainHeroic related data
     localStorage.removeItem(CACHE_KEYS.AUTH);
     localStorage.removeItem(CACHE_KEYS.EXERCISES);
+    localStorage.removeItem(CACHE_KEYS.WORKOUTS);
+    localStorage.removeItem("trainheroic_is_authenticated");
 
     // Clear all exercise history items by iterating through localStorage
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && key.startsWith(CACHE_KEYS.EXERCISE_HISTORY_PREFIX)) {
+      if (key && key && 
+          (key.startsWith(CACHE_KEYS.EXERCISE_HISTORY_PREFIX) || 
+           key.startsWith("trainheroic_"))) {
         localStorage.removeItem(key);
       }
     }
 
-    console.log("All TrainHeroic caches cleared successfully");
+    console.log("All TrainHeroic data cleared successfully");
   } catch (error) {
-    console.error("Error clearing caches:", error);
+    console.error("Error clearing data:", error);
   }
 };
 
