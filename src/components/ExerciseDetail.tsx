@@ -16,7 +16,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import type { WorkoutExercise, Workout, } from "../../api";
+import type { WorkoutExercise, Workout } from "../../api";
 import { Award } from "lucide-react";
 
 interface ExerciseDetailProps {
@@ -66,8 +66,12 @@ const ExerciseDetail: React.FC<ExerciseDetailProps> = ({
             .map((set) => set.rawValue2 || 0)
         );
 
+        // Add a day to fix the off-by-one issue
+        const date = new Date(history.date);
+        date.setDate(date.getDate() + 1);
+
         return {
-          date: new Date(history.date).toLocaleDateString("en-US", {
+          date: date.toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",
           }),
@@ -99,11 +103,17 @@ const ExerciseDetail: React.FC<ExerciseDetailProps> = ({
 
     return Array.from(prMap.entries())
       .sort((a, b) => a[0] - b[0]) // Sort by rep count
-      .map(([reps, { weight, date }]) => ({
-        reps,
-        weight,
-        date: new Date(date).toLocaleDateString(),
-      }));
+      .map(([reps, { weight, date }]) => {
+        // Add a day to fix the off-by-one issue
+        const adjustedDate = new Date(date);
+        adjustedDate.setDate(adjustedDate.getDate() + 1);
+
+        return {
+          reps,
+          weight,
+          date: adjustedDate.toLocaleDateString(),
+        };
+      });
   }, [exerciseHistory]);
 
   // Calculate one-rep max estimate (using Brzycki formula)
@@ -120,7 +130,7 @@ const ExerciseDetail: React.FC<ExerciseDetailProps> = ({
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="progress">Progress</TabsTrigger>
-            <TabsTrigger value="records">Personal Records</TabsTrigger>
+            <TabsTrigger value="records">Records</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">

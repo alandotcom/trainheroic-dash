@@ -19,82 +19,59 @@ interface ExportDataProps {
 }
 
 const ExportData: React.FC<ExportDataProps> = ({ workouts }) => {
-  const exportAsJson = () => {
-    const data = JSON.stringify(workouts, null, 2);
-    const blob = new Blob([data], { type: "application/json" });
+  const exportToJson = () => {
+    const blob = new Blob([JSON.stringify(workouts, null, 2)], {
+      type: "application/json",
+    });
     saveAs(blob, `trainheroic_workouts_${formatDateForFilename()}.json`);
   };
 
-  const exportAsCsv = () => {
-    // Create CSV header row
+  const exportToCsv = () => {
     const header = "Date,Exercise,Set,Reps,Weight (lbs),Volume (lbs)\n";
+    const rows = workouts.flatMap((workout) => {
+      return workout.exercises.flatMap((exercise) => {
+        return exercise.sets.map((set) => {
+          // Add a day to fix the off-by-one issue, consistent with UI display
+          const workoutDate = new Date(workout.date);
+          workoutDate.setDate(workoutDate.getDate() + 1);
+          const date = workoutDate.toISOString().split("T")[0]; // YYYY-MM-DD format
 
-    // Convert workouts to CSV rows
-    const rows = workouts
-      .flatMap((workout) => {
-        const date = new Date(workout.date).toISOString().split("T")[0]; // YYYY-MM-DD format
+          const reps = set.rawValue1 || 0;
+          const weight = set.rawValue2 || 0;
+          const volume = reps * weight;
 
-        return workout.exercises.flatMap((exercise) => {
-          return exercise.sets.map((set) => {
-            const reps = set.rawValue1 || 0;
-            const weight = set.rawValue2 || 0;
-            const volume = reps * weight;
-
-            // Format: Date, Exercise, Set #, Reps, Weight, Volume
-            return `"${date}","${exercise.title}",${set.setNumber},${reps},${weight},${volume}`;
-          });
+          // Format: Date, Exercise, Set #, Reps, Weight, Volume
+          return `"${date}","${exercise.title}",${set.setNumber},${reps},${weight},${volume}`;
         });
-      })
-      .join("\n");
+      });
+    });
 
-    // Combine header and rows
-    const csv = header + rows;
+    const csv = header + rows.join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     saveAs(blob, `trainheroic_workouts_${formatDateForFilename()}.csv`);
   };
 
-  const exportAsSummaryText = () => {
-    // Create a nicely formatted text summary
+  const exportToText = () => {
     const lines: string[] = [];
 
     // Add title and export date
-    lines.push("TRAINHEROIC WORKOUT SUMMARY");
+    lines.push("TrainHeroic Workout Summary");
     lines.push(`Exported on: ${new Date().toLocaleDateString()}`);
-    lines.push(""); // Empty line
+    lines.push("===============================\n");
 
-    // Add overall stats
-    lines.push("OVERALL STATISTICS");
-    lines.push(`Total Workouts: ${workouts.length}`);
-
-    const totalExercises = workouts.reduce(
-      (total, workout) => total + workout.exercises.length,
-      0
-    );
-    lines.push(`Total Exercises: ${totalExercises}`);
-
-    const uniqueExercises = new Set(
-      workouts.flatMap((workout) =>
-        workout.exercises.map((exercise) => exercise.title)
-      )
-    ).size;
-    lines.push(`Unique Exercises: ${uniqueExercises}`);
-
-    const totalVolume = workouts.reduce(
-      (total, workout) => total + calculateWorkoutVolume(workout),
-      0
-    );
-    lines.push(`Total Volume: ${totalVolume.toLocaleString()} lbs`);
-    lines.push(""); // Empty line
-
-    // Add workout summaries
-    lines.push("WORKOUT SUMMARIES");
+    // Add workout details
     workouts.forEach((workout) => {
-      const date = new Date(workout.date).toLocaleDateString();
-      const volume = calculateWorkoutVolume(workout).toLocaleString();
+      // Add a day to fix the off-by-one issue, consistent with UI display
+      const workoutDate = new Date(workout.date);
+      workoutDate.setDate(workoutDate.getDate() + 1);
+      const date = workoutDate.toLocaleDateString();
 
-      lines.push(`Date: ${date}`);
-      lines.push(`Volume: ${volume} lbs`);
+      const totalVolume = calculateWorkoutVolume(workout);
+
+      lines.push(`Workout on ${date}`);
+      lines.push(`Total Volume: ${totalVolume.toLocaleString()} lbs`);
       lines.push(`Exercises: ${workout.exercises.length}`);
+      lines.push("-----------------------------");
 
       // Add exercise details
       workout.exercises.forEach((exercise, index) => {
@@ -157,7 +134,7 @@ const ExportData: React.FC<ExportDataProps> = ({ workouts }) => {
             <Button
               variant="outline"
               className="w-full justify-start gap-2 text-sm"
-              onClick={exportAsCsv}
+              onClick={exportToCsv}
             >
               <FileSpreadsheet className="h-4 w-4 sm:h-5 sm:w-5" />
               Export as CSV
@@ -169,7 +146,7 @@ const ExportData: React.FC<ExportDataProps> = ({ workouts }) => {
             <Button
               variant="outline"
               className="w-full justify-start gap-2 text-sm"
-              onClick={exportAsJson}
+              onClick={exportToJson}
             >
               <FileJson className="h-4 w-4 sm:h-5 sm:w-5" />
               Export as JSON
@@ -181,7 +158,7 @@ const ExportData: React.FC<ExportDataProps> = ({ workouts }) => {
             <Button
               variant="outline"
               className="w-full justify-start gap-2 text-sm"
-              onClick={exportAsSummaryText}
+              onClick={exportToText}
             >
               <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
               Export as Text Summary

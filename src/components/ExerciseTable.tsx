@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
-import {
-  } from "./ui/table";
+import {} from "./ui/table";
 import { Card } from "./ui/card";
 import { Input } from "./ui/input";
 
@@ -104,7 +103,11 @@ export default function ExerciseTable({ workouts }: ExerciseTableProps) {
 
   // Format date for display
   const formatDate = (date: Date): string => {
-    return date.toLocaleDateString("en-US", {
+    // Add a day to fix the off-by-one issue
+    const adjustedDate = new Date(date);
+    adjustedDate.setDate(adjustedDate.getDate() + 1);
+
+    return adjustedDate.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",

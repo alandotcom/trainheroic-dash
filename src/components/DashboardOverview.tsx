@@ -143,7 +143,12 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ workouts }) => {
               <CardDescription className="text-xs">
                 Your last workout (
                 {mostRecentWorkout &&
-                  new Date(mostRecentWorkout.date).toLocaleDateString()}
+                  (() => {
+                    // Add a day to fix the off-by-one issue
+                    const date = new Date(mostRecentWorkout.date);
+                    date.setDate(date.getDate() + 1);
+                    return date.toLocaleDateString();
+                  })()}
                 )
               </CardDescription>
             </CardHeader>
@@ -207,7 +212,11 @@ function getWeeklyVolumeData(workouts: Workout[]) {
   const weeklyVolume: Record<string, number> = {};
 
   workouts.forEach((workout) => {
-    const date = new Date(workout.date);
+    // Add a day to fix the off-by-one issue
+    const rawDate = new Date(workout.date);
+    rawDate.setDate(rawDate.getDate() + 1);
+    const date = new Date(rawDate);
+
     const weekStart = getWeekStartDate(date);
     // Ensure weekStart is a valid date
     if (weekStart && !isNaN(weekStart.getTime())) {
