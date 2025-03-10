@@ -50,7 +50,9 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
 
   // Format date strings for better readability
   const formatDate = (dateString: string): string => {
+    // Add a day to fix the off-by-one issue
     const date = new Date(dateString);
+    date.setDate(date.getDate() + 1);
     return date.toLocaleDateString("en-US", {
       weekday: "short",
       month: "short",

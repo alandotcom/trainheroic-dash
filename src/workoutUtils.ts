@@ -271,27 +271,64 @@ export const getWorkoutHistory = async (
         (w) => !existingWorkoutIds.has(w.id)
       );
 
+      // Even if no new workouts found, we'll refresh the exercise list 
+      // to detect any new exercises added to the account
+      console.log("Refreshing exercise list to check for newly added exercises");
+      
+      // Clear the exercise list cache to force a refresh
+      localStorage.removeItem(CACHE_KEYS.EXERCISES);
+      
+      // Re-fetch the exercises list to get any new exercises
+      exercises = await fetchWithCache<Exercise[]>(
+        "exercises-list",
+        "exercises",
+        async () => {
+          console.log("Force fetching fresh exercise list");
+          const exercisesResponse = await getHistory(sessionToken);
+          if (!exercisesResponse.data) {
+            throw new Error("Failed to fetch exercise history");
+          }
+          return exercisesResponse.data;
+        }
+      );
+      
+      console.log(`Got ${exercises.length} exercises in updated list`);
+      
+      // If truly no new workouts, we can use the cached workout data 
+      // but still check recent workouts for updates
       if (newWorkouts.length === 0) {
-        console.log("No new workouts found, using cached data");
-        onProgress?.(100); // Skip to 100% progress
-        return existingWorkouts;
+        console.log("No new workouts found, but checking recent workouts for exercise updates");
       }
 
       console.log(`Found ${newWorkouts.length} new workouts`);
 
-      // We have new workouts - we need to fetch exercise history only for the exercises
-      // in these new workouts to be efficient
-
-      // First, look up which exercises were done in these new workouts
+      // We need to check for new exercises in both new workouts and recent workouts
+      
+      // Check for recent workouts that might have updates (within the last 3 days)
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      const threeDaysAgoString = threeDaysAgo.toISOString().split('T')[0];
+      
+      // Get all recent workouts that might have updates
+      const recentWorkoutsToCheck = recentWorkouts.filter(w => {
+        return w.date && threeDaysAgoString && w.date >= threeDaysAgoString;
+      });
+      
+      console.log(`Found ${recentWorkoutsToCheck.length} recent workouts within the last 3 days to check for updates`);
+      
+      // First, look up which exercises were done in these workouts
       // We'll need to filter our exercise list to only include these
 
       // Get the exercises we need to fetch history for
-      if (newWorkouts.length > 0) {
+      {
         // Create a map to track which exercises we need to fetch
         const exercisesToFetch = new Map<string, Exercise>();
 
-        // Go through new workouts and mark the exercises used
-        for (const workout of newWorkouts) {
+        // Add all exercises from both new workouts and recent ones that might have updates
+        const workoutsToProcess = [...newWorkouts, ...recentWorkoutsToCheck];
+        
+        // Go through workouts and mark the exercises used
+        for (const workout of workoutsToProcess) {
           // Use type checking to safely access exercise stats
           const workoutAny = workout as any;
           if (
@@ -317,7 +354,7 @@ export const getWorkoutHistory = async (
         // If we identified specific exercises, use only those
         if (exercisesToFetch.size > 0) {
           console.log(
-            `Fetching history for ${exercisesToFetch.size} exercises used in new workouts`
+            `Fetching history for ${exercisesToFetch.size} exercises used in new or recent workouts`
           );
           // Create a new array instead of trying to assign to the constant variable
           const exercisesToProcess = Array.from(exercisesToFetch.values());

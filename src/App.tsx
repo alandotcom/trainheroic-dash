@@ -26,7 +26,7 @@ const App: React.FC = () => {
   // Workout data state
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
-  const [dataError] = useState<string | null>(null);
+  const [dataError, setDataError] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
 
   // Load saved state from localStorage on component mount
@@ -132,6 +132,47 @@ const App: React.FC = () => {
       setLoadingProgress(0);
     }
   };
+  
+  // Handle refresh to check for new workouts
+  const handleRefresh = async () => {
+    try {
+      setDataLoading(true);
+      setDataError(null);
+      setLoadingProgress(0);
+      
+      console.log("Refreshing workout data...");
+      
+      // Get the latest workout date from our current data
+      let mostRecentDate = '1970-01-01';
+      if (workouts.length > 0 && workouts[0]?.date) {
+        mostRecentDate = workouts[0].date;
+      }
+      
+      // We'll use the cached auth token and look only for new workouts
+      // This approach doesn't require storing credentials
+      const newWorkouts = await getWorkoutHistory(
+        '', // Empty email triggers use of cached auth
+        '', // Empty password triggers use of cached auth
+        (progress) => {
+          setLoadingProgress(progress);
+        }
+      );
+      
+      setWorkouts(newWorkouts);
+      localStorage.setItem(
+        STORAGE_KEYS.WORKOUTS,
+        JSON.stringify(newWorkouts)
+      );
+      
+      console.log("Workout data refreshed successfully");
+    } catch (error) {
+      console.error("Error refreshing workout data:", error);
+      setDataError("Failed to refresh data. Please try again or log out and log back in.");
+    } finally {
+      setDataLoading(false);
+      setLoadingProgress(0);
+    }
+  };
 
   // Clear cached data
   const handleClearCache = () => {
@@ -188,6 +229,17 @@ const App: React.FC = () => {
                 Your Workout Data
               </h2>
               <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleRefresh}
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 sm:gap-2"
+                  title="Check for new workouts"
+                  disabled={dataLoading}
+                >
+                  <RefreshCw className={`h-4 w-4 ${dataLoading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
                 <Button
                   onClick={handleLogout}
                   variant="destructive"
