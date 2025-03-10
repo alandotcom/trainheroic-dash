@@ -231,11 +231,9 @@ const App: React.FC = () => {
           </>
         ) : (
           <div className="space-y-4 sm:space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
-              <h2 className="text-xl sm:text-2xl font-semibold">
-                Your Workout Data
-              </h2>
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col xs:flex-row justify-between items-center gap-3">
+              <h2 className="text-xl font-semibold">Your Workout Data</h2>
+              <div className="flex items-center gap-2 w-full xs:w-auto justify-center xs:justify-end">
                 <Button
                   onClick={handleRefresh}
                   variant={dataLoading ? "secondary" : "outline"}
@@ -296,27 +294,32 @@ const App: React.FC = () => {
                     defaultValue="dashboard"
                     className="space-y-4 sm:space-y-6"
                   >
-                    <TabsList className="grid w-full max-w-md sm:max-w-lg mx-auto grid-cols-3">
+                    <TabsList className="grid w-full max-w-full sm:max-w-lg mx-auto grid-cols-3 p-1 h-12 sm:h-10 rounded-xl bg-muted/80">
                       <TabsTrigger
                         value="dashboard"
-                        className="flex items-center gap-2"
+                        className="rounded-lg flex items-center justify-center gap-1.5 h-full"
                       >
                         <LineChart className="h-4 w-4" />
-                        <span>Dashboard</span>
+                        <span className="hidden xs:inline">Dashboard</span>
+                        <span className="xs:hidden">Dashboard</span>
                       </TabsTrigger>
                       <TabsTrigger
                         value="history"
-                        className="flex items-center gap-2"
+                        className="rounded-lg flex items-center justify-center gap-1.5 h-full"
                       >
                         <Calendar className="h-4 w-4" />
-                        <span>Workout History</span>
+                        <span className="hidden xs:inline">
+                          Workout History
+                        </span>
+                        <span className="xs:hidden">History</span>
                       </TabsTrigger>
                       <TabsTrigger
                         value="exercises"
-                        className="flex items-center gap-2"
+                        className="rounded-lg flex items-center justify-center gap-1.5 h-full"
                       >
                         <Dumbbell className="h-4 w-4" />
-                        <span>Exercises</span>
+                        <span className="hidden xs:inline">Exercises</span>
+                        <span className="xs:hidden">Exercises</span>
                       </TabsTrigger>
                     </TabsList>
 
