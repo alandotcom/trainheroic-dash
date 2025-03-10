@@ -37,29 +37,29 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, isLoading, error }) => {
   };
 
   return (
-    <div className="max-w-md mx-auto space-y-6">
+    <div className="max-w-md mx-auto space-y-4 sm:space-y-6 px-1 sm:px-0">
       <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2">
+        <h2 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2">
           TrainHeroic Login
         </h2>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground text-sm sm:text-base">
           Enter your TrainHeroic credentials to access your workout data
         </p>
       </div>
 
       {(error || formError) && (
         <Alert variant="destructive">
-          <AlertDescription>
+          <AlertDescription className="text-sm">
             {error || formError}
           </AlertDescription>
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
+      <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+        <div className="space-y-1 sm:space-y-2">
           <label
             htmlFor="email"
-            className="block text-sm font-medium"
+            className="block text-xs sm:text-sm font-medium"
           >
             Email
           </label>
@@ -71,13 +71,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, isLoading, error }) => {
             placeholder="your@email.com"
             disabled={isLoading}
             required
+            className="text-sm sm:text-base h-9 sm:h-10"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1 sm:space-y-2">
           <label
             htmlFor="password"
-            className="block text-sm font-medium"
+            className="block text-xs sm:text-sm font-medium"
           >
             Password
           </label>
@@ -88,13 +89,15 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, isLoading, error }) => {
             onChange={(e) => setPassword(e.target.value)}
             disabled={isLoading}
             required
+            className="text-sm sm:text-base h-9 sm:h-10"
           />
         </div>
 
         <Button
           type="submit"
-          className="w-full"
+          className="w-full mt-2"
           disabled={isLoading}
+          size="sm"
         >
           {isLoading ? (
             <>

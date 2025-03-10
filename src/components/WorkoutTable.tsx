@@ -148,27 +148,29 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
         <SearchBar 
           onSearch={handleSearch} 
           placeholder="Search by exercise, date, or volume..."
         />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mt-2 sm:mt-0 w-full sm:w-auto">
           <Button 
             variant="outline" 
             size="sm" 
             onClick={expandAllWorkouts}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 flex-1 sm:flex-none justify-center"
           >
             {filteredWorkouts.length === expandedWorkouts.size ? (
               <>
                 <ChevronUpSquare className="h-4 w-4" />
-                Collapse All
+                <span className="hidden xs:inline">Collapse All</span>
+                <span className="xs:hidden">Collapse</span>
               </>
             ) : (
               <>
                 <ChevronDownSquare className="h-4 w-4" />
-                Expand All
+                <span className="hidden xs:inline">Expand All</span>
+                <span className="xs:hidden">Expand</span>
               </>
             )}
           </Button>
@@ -182,122 +184,127 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
         </div>
       )}
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Exercises</TableHead>
-              <TableHead>Volume</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredWorkouts.map((workout, index) => (
-              <React.Fragment key={workoutKeys.get(workout.date) || `filtered-${workout.date}-${index}`}>
-                <TableRow 
-                  className={`hover:bg-muted/50 cursor-pointer ${searchQuery && (
-                    formatDate(workout.date).toLowerCase().includes(searchQuery.toLowerCase()) || 
-                    workout.exercises.some(ex => ex.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                    calculateWorkoutVolume(workout).toString().includes(searchQuery)
-                  ) ? 'bg-yellow-50' : ''}`}
-                  onClick={() => toggleWorkoutExpand(workout)}
-                >
-                  <TableCell className="font-medium">
-                    {searchQuery ? highlightText(formatDate(workout.date), searchQuery) : formatDate(workout.date)}
-                  </TableCell>
-                  <TableCell>
-                    {workout.exercises.length}{" "}
-                    {workout.exercises.length === 1 ? "exercise" : "exercises"}
-                  </TableCell>
-                  <TableCell className="flex justify-between items-center">
-                    <span>
-                      {searchQuery ? 
-                        highlightText(calculateWorkoutVolume(workout).toLocaleString() + " lbs", searchQuery) : 
-                        calculateWorkoutVolume(workout).toLocaleString() + " lbs"
-                      }
-                    </span>
-                    {expandedWorkouts.has(getWorkoutKey(workout)) ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                  </TableCell>
-                </TableRow>
-
-                {/* Expanded workout details */}
-                {expandedWorkouts.has(getWorkoutKey(workout)) && (
-                  <TableRow>
-                    <TableCell colSpan={3} className="bg-muted/50 p-0">
-                      <div className="p-4">
-                        <h3 className="font-bold text-lg mb-4">
-                          Workout Details
-                        </h3>
-
-                        <div className="space-y-4">
-                          {workout.exercises.map((exercise, index) => (
-                            <div
-                              key={exercise.id}
-                              className="border rounded-lg p-4 bg-background"
-                            >
-                              <div className="flex justify-between items-start mb-2">
-                                <div>
-                                  <div className="font-semibold text-lg flex items-center">
-                                    <Dumbbell className="mr-2 h-4 w-4" />
-                                    {searchQuery && exercise.title.toLowerCase().includes(searchQuery.toLowerCase()) 
-                                      ? highlightText(exercise.title, searchQuery)
-                                      : exercise.title
-                                    }
-                                  </div>
-
-                                  {exercise.bestEstimated1RM && (
-                                    <Badge variant="outline" className="mt-1">
-                                      Est. 1RM: {Math.round(exercise.bestEstimated1RM)} lbs
-                                    </Badge>
-                                  )}
-                                </div>
-                                
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation(); // Prevent row click
-                                    openExerciseDetails(exercise);
-                                  }}
-                                >
-                                  <Info className="h-4 w-4 mr-1" />
-                                  Details
-                                </Button>
-                              </div>
-
-                              <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                                {exercise.sets.map((set, setIndex) => (
-                                  <div
-                                    key={set.savedWorkoutSetExerciseId ? 
-                                      `set-${set.savedWorkoutSetExerciseId}-${set.setNumber}` : 
-                                      `${exercise.id}-set-${set.setNumber}-${setIndex}`}
-                                    className="bg-muted p-2 rounded-md text-sm"
-                                  >
-                                    <div className="font-medium">
-                                      Set {set.setNumber}
-                                    </div>
-                                    <div>
-                                      {set.rawValue1 || "0"} reps
-                                      {set.rawValue2 ? ` @ ${set.rawValue2} lbs` : ""}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+      <div className="rounded-md border overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="whitespace-nowrap">Date</TableHead>
+                <TableHead className="whitespace-nowrap">Exercises</TableHead>
+                <TableHead className="whitespace-nowrap">Volume</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredWorkouts.map((workout, index) => (
+                <React.Fragment key={workoutKeys.get(workout.date) || `filtered-${workout.date}-${index}`}>
+                  <TableRow 
+                    className={`hover:bg-muted/50 cursor-pointer ${searchQuery && (
+                      formatDate(workout.date).toLowerCase().includes(searchQuery.toLowerCase()) || 
+                      workout.exercises.some(ex => ex.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                      calculateWorkoutVolume(workout).toString().includes(searchQuery)
+                    ) ? 'bg-yellow-50' : ''}`}
+                    onClick={() => toggleWorkoutExpand(workout)}
+                  >
+                    <TableCell className="font-medium whitespace-nowrap">
+                      {searchQuery ? highlightText(formatDate(workout.date), searchQuery) : formatDate(workout.date)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {workout.exercises.length}{" "}
+                      <span className="hidden xs:inline">
+                        {workout.exercises.length === 1 ? "exercise" : "exercises"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="flex justify-between items-center whitespace-nowrap">
+                      <span>
+                        {searchQuery ? 
+                          highlightText(calculateWorkoutVolume(workout).toLocaleString() + " lbs", searchQuery) : 
+                          calculateWorkoutVolume(workout).toLocaleString() + " lbs"
+                        }
+                      </span>
+                      {expandedWorkouts.has(getWorkoutKey(workout)) ? (
+                        <ChevronUp className="h-4 w-4 ml-1" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 ml-1" />
+                      )}
                     </TableCell>
                   </TableRow>
-                )}
-              </React.Fragment>
-            ))}
-          </TableBody>
-        </Table>
+
+                  {/* Expanded workout details */}
+                  {expandedWorkouts.has(getWorkoutKey(workout)) && (
+                    <TableRow>
+                      <TableCell colSpan={3} className="bg-muted/50 p-0">
+                        <div className="p-2 sm:p-4">
+                          <h3 className="font-bold text-lg mb-2 sm:mb-4">
+                            Workout Details
+                          </h3>
+
+                          <div className="space-y-3 sm:space-y-4">
+                            {workout.exercises.map((exercise, index) => (
+                              <div
+                                key={exercise.id}
+                                className="border rounded-lg p-3 sm:p-4 bg-background"
+                              >
+                                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
+                                  <div>
+                                    <div className="font-semibold text-base sm:text-lg flex items-center">
+                                      <Dumbbell className="mr-1 sm:mr-2 h-4 w-4" />
+                                      {searchQuery && exercise.title.toLowerCase().includes(searchQuery.toLowerCase()) 
+                                        ? highlightText(exercise.title, searchQuery)
+                                        : exercise.title
+                                      }
+                                    </div>
+
+                                    {exercise.bestEstimated1RM && (
+                                      <Badge variant="outline" className="mt-1">
+                                        Est. 1RM: {Math.round(exercise.bestEstimated1RM)} lbs
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation(); // Prevent row click
+                                      openExerciseDetails(exercise);
+                                    }}
+                                    className="w-full sm:w-auto justify-center"
+                                  >
+                                    <Info className="h-4 w-4 mr-1" />
+                                    Details
+                                  </Button>
+                                </div>
+
+                                <div className="mt-3 grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
+                                  {exercise.sets.map((set, setIndex) => (
+                                    <div
+                                      key={set.savedWorkoutSetExerciseId ? 
+                                        `set-${set.savedWorkoutSetExerciseId}-${set.setNumber}` : 
+                                        `${exercise.id}-set-${set.setNumber}-${setIndex}`}
+                                      className="bg-muted p-2 rounded-md text-sm"
+                                    >
+                                      <div className="font-medium">
+                                        Set {set.setNumber}
+                                      </div>
+                                      <div>
+                                        {set.rawValue1 || "0"} reps
+                                        {set.rawValue2 ? ` @ ${set.rawValue2} lbs` : ""}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
       
       {selectedExercise && (

@@ -36,14 +36,14 @@ const SearchBar: React.FC<SearchBarProps> = ({
   };
 
   return (
-    <div className="flex w-full max-w-sm items-center relative">
-      <Search className="h-4 w-4 absolute left-3 text-muted-foreground" />
+    <div className="flex w-full sm:max-w-sm items-center relative">
+      <Search className="h-4 w-4 absolute left-2 sm:left-3 text-muted-foreground" />
       <Input
         type="text"
         placeholder={placeholder}
         value={searchQuery}
         onChange={handleInputChange}
-        className="flex-1 pl-9"
+        className="flex-1 pl-8 sm:pl-9 h-9 sm:h-10 text-sm sm:text-base"
       />
     </div>
   );

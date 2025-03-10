@@ -33,30 +33,30 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ workouts }) => {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Workouts</CardTitle>
-            <CardDescription>Lifetime</CardDescription>
+          <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Workouts</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Lifetime</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
             <div className="flex items-center">
               <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
-              <div className="text-2xl font-bold">{totalWorkouts}</div>
+              <div className="text-xl sm:text-2xl font-bold">{totalWorkouts}</div>
             </div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Exercises</CardTitle>
-            <CardDescription>All workouts</CardDescription>
+          <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Exercises</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">All workouts</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center">
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <div className="flex items-center flex-wrap gap-y-1">
               <Dumbbell className="h-4 w-4 text-muted-foreground mr-2" />
-              <div className="text-2xl font-bold">{totalExercises}</div>
-              <Badge variant="outline" className="ml-2">
+              <div className="text-xl sm:text-2xl font-bold">{totalExercises}</div>
+              <Badge variant="outline" className="ml-2 text-xs">
                 {uniqueExercises} unique
               </Badge>
             </div>
@@ -65,21 +65,33 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ workouts }) => {
       </div>
       
       <Tabs defaultValue="volume">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-2 text-xs sm:text-sm">
           <TabsTrigger value="volume">Volume Over Time</TabsTrigger>
           <TabsTrigger value="recent">Recent Progress</TabsTrigger>
         </TabsList>
         <TabsContent value="volume" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Weekly Volume</CardTitle>
-              <CardDescription>Pounds lifted each week</CardDescription>
+            <CardHeader className="px-2 sm:px-6 pt-3 sm:pt-6 pb-1 sm:pb-3">
+              <CardTitle className="text-base sm:text-lg">Weekly Volume</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">Pounds lifted each week</CardDescription>
             </CardHeader>
-            <CardContent className="h-80">
+            <CardContent className="h-60 sm:h-80 px-0 sm:px-6 pb-2 sm:pb-6">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={weeklyVolumeData}>
-                  <XAxis dataKey="week" />
-                  <YAxis />
+                <BarChart data={weeklyVolumeData} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
+                  <XAxis 
+                    dataKey="week" 
+                    fontSize={12}
+                    tickFormatter={(value) => {
+                      // On mobile, show abbreviated dates
+                      const isSmallScreen = window.innerWidth < 640;
+                      if (isSmallScreen) {
+                        const parts = value.split('-');
+                        return parts.length === 3 ? `${parts[1]}/${parts[2]}` : value;
+                      }
+                      return value;
+                    }}
+                  />
+                  <YAxis width={45} fontSize={12} />
                   <Tooltip 
                     formatter={(value) => [`${value.toLocaleString()} lbs`, 'Volume']}
                   />
@@ -91,15 +103,17 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ workouts }) => {
         </TabsContent>
         <TabsContent value="recent">
           <Card>
-            <CardHeader>
-              <CardTitle>Recent Progress</CardTitle>
-              <CardDescription>Your last workout ({mostRecentWorkout && new Date(mostRecentWorkout.date).toLocaleDateString()})</CardDescription>
+            <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-2 sm:pb-3">
+              <CardTitle className="text-base sm:text-lg">Recent Progress</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
+                Your last workout ({mostRecentWorkout && new Date(mostRecentWorkout.date).toLocaleDateString()})
+              </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
               {mostRecentWorkout && (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <div>
-                    <div className="flex justify-between mb-1 text-sm">
+                    <div className="flex justify-between mb-1 text-xs sm:text-sm">
                       <span>Volume: {calculateWorkoutVolume(mostRecentWorkout).toLocaleString()} lbs</span>
                       <span>{mostRecentWorkout.exercises.length} exercises</span>
                     </div>
@@ -109,7 +123,7 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ workouts }) => {
                   <div className="space-y-2">
                     {mostRecentWorkout.exercises.map(exercise => (
                       <div key={exercise.id} className="border p-2 rounded-md">
-                        <div className="font-medium">{exercise.title}</div>
+                        <div className="font-medium text-sm sm:text-base truncate">{exercise.title}</div>
                         <div className="text-xs text-muted-foreground">
                           {exercise.sets.map(set => `${set.rawValue1}${set.rawValue2 ? ` × ${set.rawValue2}lbs` : ''}`).join(', ')}
                         </div>

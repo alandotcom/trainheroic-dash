@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import type { Workout } from "../api";
 import WorkoutTable from "./components/WorkoutTable";
+import ExerciseTable from "./components/ExerciseTable";
 import LoginForm from "./components/LoginForm";
 import DashboardOverview from "./components/DashboardOverview";
 import { getWorkoutHistory, clearAllCaches } from "./workoutUtils";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { RefreshCw, LogOut } from "lucide-react";
+import { RefreshCw, LogOut, Dumbbell, LineChart, Calendar } from "lucide-react";
 
 // LocalStorage keys for authentication persistence
 const STORAGE_KEYS = {
@@ -103,9 +104,9 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4">
+    <div className="min-h-screen bg-background p-2 sm:p-4">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center sm:text-left">
           TrainHeroic Workout Tracker
         </h1>
 
@@ -122,7 +123,7 @@ const App: React.FC = () => {
             </Card>
             
             {dataLoading && (
-              <div className="mt-8 max-w-md mx-auto space-y-2">
+              <div className="mt-8 max-w-md mx-auto space-y-2 px-2">
                 <div className="text-center">
                   Loading your workout data: {loadingProgress}%
                 </div>
@@ -134,9 +135,9 @@ const App: React.FC = () => {
             )}
           </>
         ) : (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 Your Workout Data
               </h2>
               <div className="flex items-center gap-2">
@@ -144,17 +145,18 @@ const App: React.FC = () => {
                   onClick={handleClearCache}
                   variant="outline"
                   size="sm"
-                  className="gap-2"
+                  className="gap-1 sm:gap-2"
                   title="Clear cached data to fetch fresh information"
                 >
                   <RefreshCw className="h-4 w-4" />
-                  Refresh Data
+                  <span className="hidden sm:inline">Refresh Data</span>
+                  <span className="sm:hidden">Refresh</span>
                 </Button>
                 <Button
                   onClick={handleLogout}
                   variant="destructive"
                   size="sm" 
-                  className="gap-2"
+                  className="gap-1 sm:gap-2"
                   title="Sign out of your account"
                 >
                   <LogOut className="h-4 w-4" />
@@ -166,7 +168,7 @@ const App: React.FC = () => {
             {dataLoading ? (
               <div className="flex flex-col justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
-                <Progress value={loadingProgress} className="w-full max-w-md mb-2" />
+                <Progress value={loadingProgress} className="w-full max-w-md mb-2 px-4" />
                 <div className="text-sm text-muted-foreground">
                   Loading: {loadingProgress}% complete
                 </div>
@@ -176,18 +178,32 @@ const App: React.FC = () => {
                 {dataError}
               </div>
             ) : (
-              <Tabs defaultValue="dashboard" className="space-y-6">
-                <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-                  <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                  <TabsTrigger value="history">Workout History</TabsTrigger>
+              <Tabs defaultValue="dashboard" className="space-y-4 sm:space-y-6">
+                <TabsList className="grid w-full max-w-md sm:max-w-lg mx-auto grid-cols-3">
+                  <TabsTrigger value="dashboard" className="flex items-center gap-2">
+                    <LineChart className="h-4 w-4" />
+                    <span>Dashboard</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="history" className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span>Workout History</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="exercises" className="flex items-center gap-2">
+                    <Dumbbell className="h-4 w-4" />
+                    <span>Exercises</span>
+                  </TabsTrigger>
                 </TabsList>
                 
-                <TabsContent value="dashboard" className="mt-6">
+                <TabsContent value="dashboard" className="mt-4 sm:mt-6">
                   <DashboardOverview workouts={workouts} />
                 </TabsContent>
                 
-                <TabsContent value="history" className="mt-6">
+                <TabsContent value="history" className="mt-4 sm:mt-6">
                   <WorkoutTable workouts={workouts} />
+                </TabsContent>
+                
+                <TabsContent value="exercises" className="mt-4 sm:mt-6">
+                  <ExerciseTable workouts={workouts} />
                 </TabsContent>
               </Tabs>
             )}

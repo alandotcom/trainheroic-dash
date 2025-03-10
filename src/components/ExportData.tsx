@@ -114,9 +114,10 @@ const ExportData: React.FC<ExportDataProps> = ({ workouts }) => {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
+        <Button variant="outline" size="sm" className="gap-1 sm:gap-2 flex-1 sm:flex-none justify-center">
           <Download className="h-4 w-4" />
-          Export Data
+          <span className="hidden xs:inline">Export Data</span>
+          <span className="xs:hidden">Export</span>
         </Button>
       </SheetTrigger>
       <SheetContent>
@@ -127,46 +128,46 @@ const ExportData: React.FC<ExportDataProps> = ({ workouts }) => {
           </SheetDescription>
         </SheetHeader>
         
-        <div className="mt-6 space-y-6">
+        <div className="mt-4 sm:mt-6 space-y-4 sm:space-y-6">
           <Alert>
-            <AlertDescription>
+            <AlertDescription className="text-xs sm:text-sm">
               Your data is exported locally and is never sent to any server.
             </AlertDescription>
           </Alert>
           
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <Button 
               variant="outline" 
-              className="w-full justify-start gap-2"
+              className="w-full justify-start gap-2 text-sm"
               onClick={exportAsCsv}
             >
-              <FileSpreadsheet className="h-5 w-5" />
+              <FileSpreadsheet className="h-4 w-4 sm:h-5 sm:w-5" />
               Export as CSV
-              <span className="ml-auto text-xs text-muted-foreground">
+              <span className="ml-auto text-[10px] sm:text-xs text-muted-foreground">
                 For Excel, Google Sheets
               </span>
             </Button>
             
             <Button 
               variant="outline" 
-              className="w-full justify-start gap-2"
+              className="w-full justify-start gap-2 text-sm"
               onClick={exportAsJson}
             >
-              <FileJson className="h-5 w-5" />
+              <FileJson className="h-4 w-4 sm:h-5 sm:w-5" />
               Export as JSON
-              <span className="ml-auto text-xs text-muted-foreground">
+              <span className="ml-auto text-[10px] sm:text-xs text-muted-foreground">
                 Raw data format
               </span>
             </Button>
             
             <Button 
               variant="outline" 
-              className="w-full justify-start gap-2"
+              className="w-full justify-start gap-2 text-sm"
               onClick={exportAsSummaryText}
             >
-              <FileText className="h-5 w-5" />
+              <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
               Export as Text Summary
-              <span className="ml-auto text-xs text-muted-foreground">
+              <span className="ml-auto text-[10px] sm:text-xs text-muted-foreground">
                 Human-readable format
               </span>
             </Button>
