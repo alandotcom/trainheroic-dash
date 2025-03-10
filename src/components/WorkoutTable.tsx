@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useMemo, useRef } from "react";
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+  useEffect,
+} from "react";
 import type { Workout, WorkoutExercise } from "../../api";
 import { calculateWorkoutVolume } from "../workoutUtils";
 import SearchBar from "./SearchBar";
@@ -35,9 +41,9 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
   const [selectedExercise, setSelectedExercise] =
     useState<WorkoutExercise | null>(null);
   const [isExerciseDetailOpen, setIsExerciseDetailOpen] = useState(false);
-  const [highlightedWorkout, setHighlightedWorkout] = useState<string | null>(
-    null
-  );
+  const [pendingWorkoutToView, setPendingWorkoutToView] = useState<
+    string | null
+  >(null);
   const workoutRefs = useRef<{ [key: string]: HTMLTableRowElement | null }>({});
 
   // Create a map of workout dates to unique IDs for stable keys
@@ -149,6 +155,79 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
     [workouts, searchQuery, formatDate]
   );
 
+  // Handle viewing a workout from exercise detail
+  const handleViewWorkout = useCallback(
+    (workoutDate: string) => {
+      // Close the exercise detail modal first
+      setIsExerciseDetailOpen(false);
+
+      // Set the pending workout to view
+      setPendingWorkoutToView(workoutDate);
+
+      // Use setTimeout to ensure the modal is closed before we try to navigate
+      setTimeout(() => {
+        // Find the workout by date
+        const workout = workouts.find((w) => w.date === workoutDate);
+        if (!workout) {
+          console.warn(`Workout not found for date: ${workoutDate}`);
+          setPendingWorkoutToView(null);
+          return;
+        }
+
+        // Expand the workout
+        const workoutKey = getWorkoutKey(workout);
+        setExpandedWorkouts((prev) => {
+          const newExpanded = new Set(prev);
+          newExpanded.add(workoutKey);
+          return newExpanded;
+        });
+
+        // Find the index of the workout in the filtered list
+        const workoutIndex = filteredWorkouts.findIndex(
+          (w) => w.date === workoutDate
+        );
+        if (workoutIndex === -1) {
+          console.warn(
+            `Workout not found in filtered list for date: ${workoutDate}`
+          );
+          setPendingWorkoutToView(null);
+          return;
+        }
+
+        // Clear the search query to ensure the workout is visible
+        if (searchQuery) {
+          setSearchQuery("");
+        }
+
+        // Scroll to the workout
+        try {
+          // Use the workout date as a selector
+          const selector = `tr[data-date="${workoutDate}"]`;
+          const workoutRow = document.querySelector(selector);
+
+          if (workoutRow) {
+            // Scroll to the workout row
+            workoutRow.scrollIntoView({ behavior: "smooth" });
+
+            // Highlight the row
+            workoutRow.classList.add("bg-primary/20");
+            setTimeout(() => {
+              workoutRow.classList.remove("bg-primary/20");
+              setPendingWorkoutToView(null);
+            }, 2000);
+          } else {
+            console.warn(`Could not find workout row for date: ${workoutDate}`);
+            setPendingWorkoutToView(null);
+          }
+        } catch (error) {
+          console.error("Error scrolling to workout:", error);
+          setPendingWorkoutToView(null);
+        }
+      }, 100);
+    },
+    [workouts, getWorkoutKey, filteredWorkouts, searchQuery]
+  );
+
   // Expand all workouts
   const expandAllWorkouts = useCallback(() => {
     // If all are expanded, collapse all instead
@@ -187,7 +266,7 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
         );
       }
     },
-    [workouts, getWorkoutKey]
+    [workouts, getWorkoutKey, formatDate]
   );
 
   // Open exercise details dialog
@@ -195,41 +274,6 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
     setSelectedExercise(exercise);
     setIsExerciseDetailOpen(true);
   }, []);
-
-  // Handle viewing a specific workout from exercise detail
-  const handleViewWorkout = useCallback(
-    (workoutDate: string) => {
-      // Find the workout by date
-      const workout = workouts.find((w) => w.date === workoutDate);
-      if (!workout) return;
-
-      // Close the exercise detail modal
-      setIsExerciseDetailOpen(false);
-
-      // Get the workout key
-      const workoutKey = getWorkoutKey(workout);
-
-      // Expand the workout if it's not already expanded
-      setExpandedWorkouts((prev) => {
-        const newExpanded = new Set(prev);
-        newExpanded.add(workoutKey);
-        return newExpanded;
-      });
-
-      // Highlight the workout temporarily
-      setHighlightedWorkout(workoutKey);
-      setTimeout(() => setHighlightedWorkout(null), 2000);
-
-      // Scroll to the workout after a short delay
-      setTimeout(() => {
-        const element = workoutRefs.current[workoutKey];
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }, 300);
-    },
-    [workouts, getWorkoutKey]
-  );
 
   if (workouts.length === 0) {
     return (
@@ -291,15 +335,15 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
             <TableBody>
               {filteredWorkouts.map((workout, index) => {
                 const workoutKey = getWorkoutKey(workout);
+                const isHighlighted = workout.date === pendingWorkoutToView;
+
                 return (
                   <React.Fragment key={workoutKey}>
                     <TableRow
-                      ref={(el) => {
-                        workoutRefs.current[workoutKey] = el;
-                      }}
+                      data-date={workout.date}
                       className={`hover:bg-muted/50 cursor-pointer ${
-                        highlightedWorkout === workoutKey
-                          ? "bg-primary/10"
+                        isHighlighted
+                          ? "bg-primary/20"
                           : searchQuery &&
                             (formatDate(workout.date)
                               .toLowerCase()
