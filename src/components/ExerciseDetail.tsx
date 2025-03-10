@@ -17,13 +17,15 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { WorkoutExercise, Workout } from "../../api";
-import { Award } from "lucide-react";
+import { Award, Calendar, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ExerciseDetailProps {
   exercise: WorkoutExercise;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workouts: Workout[]; // Full workout history for this user
+  onViewWorkout?: (workoutDate: string, workoutId?: number) => void; // Callback to view a specific workout
 }
 
 const ExerciseDetail: React.FC<ExerciseDetailProps> = ({
@@ -31,6 +33,7 @@ const ExerciseDetail: React.FC<ExerciseDetailProps> = ({
   open,
   onOpenChange,
   workouts,
+  onViewWorkout,
 }) => {
   // Find all occurrences of this exercise across workouts
   const exerciseHistory = React.useMemo(() => {
@@ -43,19 +46,29 @@ const ExerciseDetail: React.FC<ExerciseDetailProps> = ({
           return {
             date: workout.date,
             exercise: matchedExercise,
+            workoutId: workout.programWorkoutId,
+            totalVolume: workout.exercises.reduce((total, ex) => {
+              return (
+                total +
+                ex.sets.reduce((setTotal, set) => {
+                  return setTotal + (set.rawValue1 || 0) * (set.rawValue2 || 0);
+                }, 0)
+              );
+            }, 0),
           };
         }
         return null;
       })
       .filter(Boolean)
       .sort(
-        (a, b) => new Date(a!.date).getTime() - new Date(b!.date).getTime()
+        (a, b) => new Date(b!.date).getTime() - new Date(a!.date).getTime() // Newest first
       );
   }, [exercise.title, workouts]);
 
   // Generate data for the weight progression chart (using max weight from each workout)
   const weightProgressionData = React.useMemo(() => {
-    return exerciseHistory
+    return [...exerciseHistory]
+      .sort((a, b) => new Date(a!.date).getTime() - new Date(b!.date).getTime()) // Oldest first for chart
       .map((history) => {
         if (!history) return null;
 
@@ -116,6 +129,27 @@ const ExerciseDetail: React.FC<ExerciseDetailProps> = ({
       });
   }, [exerciseHistory]);
 
+  // Format date for display
+  const formatDate = (dateString: string): string => {
+    // Add a day to fix the off-by-one issue
+    const date = new Date(dateString);
+    date.setDate(date.getDate() + 1);
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  // Handle viewing a specific workout
+  const handleViewWorkout = (date: string, workoutId?: number) => {
+    if (onViewWorkout) {
+      onViewWorkout(date, workoutId);
+      onOpenChange(false); // Close the dialog
+    }
+  };
+
   // Calculate one-rep max estimate (using Brzycki formula)
   const estimatedOneRepMax = exercise.bestEstimated1RM;
 
@@ -127,8 +161,9 @@ const ExerciseDetail: React.FC<ExerciseDetailProps> = ({
         </DialogHeader>
 
         <Tabs defaultValue="overview">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
             <TabsTrigger value="progress">Progress</TabsTrigger>
             <TabsTrigger value="records">Records</TabsTrigger>
           </TabsList>
@@ -187,6 +222,92 @@ const ExerciseDetail: React.FC<ExerciseDetailProps> = ({
                     </div>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="history">
+            <Card>
+              <CardHeader>
+                <CardTitle>Exercise History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {exerciseHistory.length > 0 ? (
+                  <div className="space-y-4">
+                    {exerciseHistory.map((historyItem, index) => {
+                      if (!historyItem) return null;
+                      return (
+                        <div
+                          key={`${historyItem.date}-${index}`}
+                          className="border rounded-lg overflow-hidden"
+                        >
+                          <div className="bg-muted p-3 flex justify-between items-center">
+                            <div className="flex items-center">
+                              <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                              <span className="font-medium">
+                                {formatDate(historyItem.date)}
+                              </span>
+                            </div>
+                            <Button
+                              variant="link"
+                              size="sm"
+                              className="text-xs text-primary p-0 h-auto"
+                              onClick={() =>
+                                handleViewWorkout(
+                                  historyItem.date,
+                                  historyItem.workoutId
+                                )
+                              }
+                            >
+                              View Workout
+                              <ArrowRight className="h-3 w-3 ml-1" />
+                            </Button>
+                          </div>
+                          <div className="p-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-2">
+                              {historyItem.exercise.sets.map((set) => (
+                                <div
+                                  key={set.setNumber}
+                                  className="bg-muted/50 p-2 rounded text-sm flex justify-between items-center"
+                                >
+                                  <span className="font-medium">
+                                    Set {set.setNumber}
+                                  </span>
+                                  <span>
+                                    <span className="font-semibold">
+                                      {set.rawValue1 || "0"}
+                                    </span>{" "}
+                                    reps
+                                    {set.rawValue2 ? (
+                                      <>
+                                        {" "}
+                                        @{" "}
+                                        <span className="font-semibold">
+                                          {set.rawValue2}
+                                        </span>{" "}
+                                        lbs
+                                      </>
+                                    ) : (
+                                      ""
+                                    )}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-2">
+                              Total workout volume:{" "}
+                              {historyItem.totalVolume.toLocaleString()} lbs
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No history found for this exercise.
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
