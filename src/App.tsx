@@ -132,42 +132,47 @@ const App: React.FC = () => {
       setLoadingProgress(0);
     }
   };
-  
+
   // Handle refresh to check for new workouts
   const handleRefresh = async () => {
+    // Prevent multiple refresh operations
+    if (dataLoading) {
+      console.log("Refresh already in progress");
+      return;
+    }
+
     try {
       setDataLoading(true);
       setDataError(null);
       setLoadingProgress(0);
-      
+
       console.log("Refreshing workout data...");
-      
+
       // Get the latest workout date from our current data
-      let mostRecentDate = '1970-01-01';
+      let mostRecentDate = "1970-01-01";
       if (workouts.length > 0 && workouts[0]?.date) {
         mostRecentDate = workouts[0].date;
       }
-      
+
       // We'll use the cached auth token and look only for new workouts
       // This approach doesn't require storing credentials
       const newWorkouts = await getWorkoutHistory(
-        '', // Empty email triggers use of cached auth
-        '', // Empty password triggers use of cached auth
+        "", // Empty email triggers use of cached auth
+        "", // Empty password triggers use of cached auth
         (progress) => {
           setLoadingProgress(progress);
         }
       );
-      
+
       setWorkouts(newWorkouts);
-      localStorage.setItem(
-        STORAGE_KEYS.WORKOUTS,
-        JSON.stringify(newWorkouts)
-      );
-      
+      localStorage.setItem(STORAGE_KEYS.WORKOUTS, JSON.stringify(newWorkouts));
+
       console.log("Workout data refreshed successfully");
     } catch (error) {
       console.error("Error refreshing workout data:", error);
-      setDataError("Failed to refresh data. Please try again or log out and log back in.");
+      setDataError(
+        "Failed to refresh data. Please try again or log out and log back in."
+      );
     } finally {
       setDataLoading(false);
       setLoadingProgress(0);
@@ -233,14 +238,19 @@ const App: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Button
                   onClick={handleRefresh}
-                  variant="outline"
+                  variant={dataLoading ? "secondary" : "outline"}
                   size="sm"
                   className="gap-1 sm:gap-2"
-                  title="Check for new workouts"
-                  disabled={dataLoading}
+                  title={
+                    dataLoading
+                      ? "Update in progress"
+                      : "Check for new workouts"
+                  }
                 >
-                  <RefreshCw className={`h-4 w-4 ${dataLoading ? 'animate-spin' : ''}`} />
-                  Refresh
+                  <RefreshCw
+                    className={`h-4 w-4 ${dataLoading ? "animate-spin" : ""}`}
+                  />
+                  {dataLoading ? "Updating..." : "Refresh"}
                 </Button>
                 <Button
                   onClick={handleLogout}
@@ -263,10 +273,21 @@ const App: React.FC = () => {
               <>
                 <div className="relative">
                   {dataLoading && (
-                    <div className="absolute top-0 right-0 flex items-center p-2 z-10">
-                      <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-primary mr-2"></div>
-                      <div className="text-xs text-muted-foreground">
-                        Updating: {loadingProgress}%
+                    <div className="fixed bottom-4 right-4 z-50">
+                      <div className="bg-card border rounded-lg shadow-lg p-4 max-w-xs flex items-center gap-3">
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent"></div>
+                        <div className="flex-1">
+                          <div className="text-sm font-medium mb-1">
+                            Updating Workouts
+                          </div>
+                          <Progress
+                            value={loadingProgress}
+                            className="h-1.5 w-full"
+                          />
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {loadingProgress}% Complete
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
