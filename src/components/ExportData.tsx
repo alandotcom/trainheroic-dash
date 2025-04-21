@@ -82,7 +82,7 @@ const ExportData: React.FC<ExportDataProps> = ({ workouts }) => {
           lines.push(
             `     Set ${set.setNumber}: ${set.rawValue1 || 0} reps @ ${
               set.rawValue2 || 0
-            } lbs`
+            } lbs`,
           );
         });
       });

@@ -30,7 +30,7 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ workouts }) => {
   const totalWorkouts = workouts.length;
   const totalExercises = workouts.reduce(
     (total, workout) => total + workout.exercises.length,
-    0
+    0,
   );
 
   // Get most recent workout
@@ -42,8 +42,8 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ workouts }) => {
   // Count unique exercises
   const uniqueExercises = new Set(
     workouts.flatMap((workout) =>
-      workout.exercises.map((exercise) => exercise.title)
-    )
+      workout.exercises.map((exercise) => exercise.title),
+    ),
   ).size;
 
   return (
@@ -160,7 +160,7 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ workouts }) => {
                       <span>
                         Volume:{" "}
                         {calculateWorkoutVolume(
-                          mostRecentWorkout
+                          mostRecentWorkout,
                         ).toLocaleString()}{" "}
                         lbs
                       </span>
@@ -183,7 +183,7 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({ workouts }) => {
                               (set) =>
                                 `${set.rawValue1}${
                                   set.rawValue2 ? ` × ${set.rawValue2}lbs` : ""
-                                }`
+                                }`,
                             )
                             .join(", ")}
                         </div>

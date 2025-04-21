@@ -5,6 +5,7 @@ A web application for visualizing and analyzing your TrainHeroic workout data.
 ## Description
 
 TrainHeroic Dashboard provides a comprehensive interface for TrainHeroic users to:
+
 - View and search through your workout history
 - Analyze exercise performance over time
 - Track volume and progress metrics

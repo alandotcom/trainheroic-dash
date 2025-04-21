@@ -15,7 +15,6 @@ interface CacheData {
 // Auth cache expiration time (24 hours in milliseconds)
 // We no longer expire workout data as past workouts don't change
 
-
 // LocalStorage cache keys
 const CACHE_KEYS = {
   AUTH: "trainheroic_auth_cache",
@@ -47,7 +46,7 @@ const saveToCache = (key: string, data: any): void => {
  * @returns The cached data or null if not found
  */
 const getFromCache = <T>(
-  key: string
+  key: string,
 ): { data: T; timestamp: number } | null => {
   try {
     const cached = localStorage.getItem(key);
@@ -73,7 +72,7 @@ const getFromCache = <T>(
 const fetchWithCache = async <T>(
   cacheKey: string,
   cacheName: "auth" | "exercises" | "exerciseHistory",
-  fetchFn: () => Promise<T>
+  fetchFn: () => Promise<T>,
 ): Promise<T> => {
   // Determine the localStorage key based on cache name
   let storageKey: string;
@@ -120,9 +119,12 @@ export const clearAllCaches = () => {
     // Clear all exercise history items by iterating through localStorage
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && key && 
-          (key.startsWith(CACHE_KEYS.EXERCISE_HISTORY_PREFIX) || 
-           key.startsWith("trainheroic_"))) {
+      if (
+        key &&
+        key &&
+        (key.startsWith(CACHE_KEYS.EXERCISE_HISTORY_PREFIX) ||
+          key.startsWith("trainheroic_"))
+      ) {
         localStorage.removeItem(key);
       }
     }
@@ -143,7 +145,7 @@ export const clearAllCaches = () => {
 export const getWorkoutHistory = async (
   email: string,
   password: string,
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
 ): Promise<Workout[]> => {
   console.log("Authenticating and fetching workout history...");
 
@@ -197,7 +199,7 @@ export const getWorkoutHistory = async (
         throw new Error("Failed to fetch exercise history");
       }
       return exercisesResponse.data;
-    }
+    },
   );
 
   console.log(`Found ${exercises.length} exercises in history`);
@@ -226,7 +228,7 @@ export const getWorkoutHistory = async (
 
       // Check for workouts between the most recent cached date and today
       console.log(
-        `Checking for new workouts between ${mostRecentDate} and ${today}`
+        `Checking for new workouts between ${mostRecentDate} and ${today}`,
       );
 
       // Default to a very old date if we don't have a valid date string
@@ -246,7 +248,7 @@ export const getWorkoutHistory = async (
       const recentWorkoutsResponse = await getRecentWorkouts(
         sessionToken,
         startDateString, // Guaranteed to be a string now
-        todayString // Guaranteed to be a string now
+        todayString, // Guaranteed to be a string now
       );
 
       // If no recent workouts, we can just return the existing data
@@ -262,27 +264,29 @@ export const getWorkoutHistory = async (
       // We have recent workouts - extract which exercises we need to fetch
       const recentWorkouts = recentWorkoutsResponse.data;
       console.log(
-        `Found ${recentWorkouts.length} recent workouts, checking for new ones`
+        `Found ${recentWorkouts.length} recent workouts, checking for new ones`,
       );
 
       // Filter the recent workouts to find truly new ones (that aren't in our cache)
       const existingWorkoutIds = new Set(
         existingWorkouts
           .filter((w) => w.programWorkoutId)
-          .map((w) => w.programWorkoutId)
+          .map((w) => w.programWorkoutId),
       );
 
       const newWorkouts = recentWorkouts.filter(
-        (w) => !existingWorkoutIds.has(w.id)
+        (w) => !existingWorkoutIds.has(w.id),
       );
 
-      // Even if no new workouts found, we'll refresh the exercise list 
+      // Even if no new workouts found, we'll refresh the exercise list
       // to detect any new exercises added to the account
-      console.log("Refreshing exercise list to check for newly added exercises");
-      
+      console.log(
+        "Refreshing exercise list to check for newly added exercises",
+      );
+
       // Clear the exercise list cache to force a refresh
       localStorage.removeItem(CACHE_KEYS.EXERCISES);
-      
+
       // Re-fetch the exercises list to get any new exercises
       exercises = await fetchWithCache<Exercise[]>(
         "exercises-list",
@@ -294,33 +298,37 @@ export const getWorkoutHistory = async (
             throw new Error("Failed to fetch exercise history");
           }
           return exercisesResponse.data;
-        }
+        },
       );
-      
+
       console.log(`Got ${exercises.length} exercises in updated list`);
-      
-      // If truly no new workouts, we can use the cached workout data 
+
+      // If truly no new workouts, we can use the cached workout data
       // but still check recent workouts for updates
       if (newWorkouts.length === 0) {
-        console.log("No new workouts found, but checking recent workouts for exercise updates");
+        console.log(
+          "No new workouts found, but checking recent workouts for exercise updates",
+        );
       }
 
       console.log(`Found ${newWorkouts.length} new workouts`);
 
       // We need to check for new exercises in both new workouts and recent workouts
-      
+
       // Check for recent workouts that might have updates (within the last 3 days)
       const threeDaysAgo = new Date();
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-      const threeDaysAgoString = threeDaysAgo.toISOString().split('T')[0];
-      
+      const threeDaysAgoString = threeDaysAgo.toISOString().split("T")[0];
+
       // Get all recent workouts that might have updates
-      const recentWorkoutsToCheck = recentWorkouts.filter(w => {
+      const recentWorkoutsToCheck = recentWorkouts.filter((w) => {
         return w.date && threeDaysAgoString && w.date >= threeDaysAgoString;
       });
-      
-      console.log(`Found ${recentWorkoutsToCheck.length} recent workouts within the last 3 days to check for updates`);
-      
+
+      console.log(
+        `Found ${recentWorkoutsToCheck.length} recent workouts within the last 3 days to check for updates`,
+      );
+
       // First, look up which exercises were done in these workouts
       // We'll need to filter our exercise list to only include these
 
@@ -331,7 +339,7 @@ export const getWorkoutHistory = async (
 
         // Add all exercises from both new workouts and recent ones that might have updates
         const workoutsToProcess = [...newWorkouts, ...recentWorkoutsToCheck];
-        
+
         // Go through workouts and mark the exercises used
         for (const workout of workoutsToProcess) {
           // Use type checking to safely access exercise stats
@@ -345,7 +353,7 @@ export const getWorkoutHistory = async (
               if (stat && stat.exercise_id) {
                 // Find the full exercise info from our exercise list
                 const exerciseInfo = exercises.find(
-                  (e) => String(e.id) === String(stat.exercise_id)
+                  (e) => String(e.id) === String(stat.exercise_id),
                 );
 
                 if (exerciseInfo) {
@@ -359,7 +367,7 @@ export const getWorkoutHistory = async (
         // If we identified specific exercises, use only those
         if (exercisesToFetch.size > 0) {
           console.log(
-            `Fetching history for ${exercisesToFetch.size} exercises used in new or recent workouts`
+            `Fetching history for ${exercisesToFetch.size} exercises used in new or recent workouts`,
           );
           // Create a new array instead of trying to assign to the constant variable
           const exercisesToProcess = Array.from(exercisesToFetch.values());
@@ -386,7 +394,7 @@ export const getWorkoutHistory = async (
 
     const exerciseId = String(exercise.id);
     console.log(
-      `Fetching history for exercise: ${exercise.title} (ID: ${exerciseId})`
+      `Fetching history for exercise: ${exercise.title} (ID: ${exerciseId})`,
     );
 
     try {
@@ -394,12 +402,12 @@ export const getWorkoutHistory = async (
       const exerciseHistoryResponse = await getExerciseHistory(
         exerciseId,
         userId,
-        sessionToken
+        sessionToken,
       );
 
       if (!exerciseHistoryResponse.data?.history) {
         console.warn(
-          `No history found for exercise ${exercise.title} (ID: ${exerciseId})`
+          `No history found for exercise ${exercise.title} (ID: ${exerciseId})`,
         );
         return { exercise, exerciseHistory: [] };
       }
@@ -409,11 +417,11 @@ export const getWorkoutHistory = async (
       // Cache the fresh exercise history for future use
       saveToCache(
         `${CACHE_KEYS.EXERCISE_HISTORY_PREFIX}${exerciseId}`,
-        exerciseHistory
+        exerciseHistory,
       );
 
       console.log(
-        `Found ${exerciseHistory.length} history entries for ${exercise.title}`
+        `Found ${exerciseHistory.length} history entries for ${exercise.title}`,
       );
 
       // Report progress during exercise history fetching
@@ -428,12 +436,12 @@ export const getWorkoutHistory = async (
       // On error, try to use cached data if available
       try {
         const cachedHistory = getFromCache<any[]>(
-          `${CACHE_KEYS.EXERCISE_HISTORY_PREFIX}${exerciseId}`
+          `${CACHE_KEYS.EXERCISE_HISTORY_PREFIX}${exerciseId}`,
         );
 
         if (cachedHistory) {
           console.log(
-            `Using cached history for ${exercise.title} due to fetch error`
+            `Using cached history for ${exercise.title} due to fetch error`,
           );
 
           // Report progress even when using cached data
@@ -446,7 +454,7 @@ export const getWorkoutHistory = async (
       } catch (cacheError) {
         console.warn(
           `Cache retrieval error for ${exercise.title}:`,
-          cacheError
+          cacheError,
         );
       }
 
@@ -468,7 +476,7 @@ export const getWorkoutHistory = async (
       const batch = exercises
         .slice(i, i + MAX_CONCURRENT_REQUESTS)
         .map((exercise, batchIndex) =>
-          processExercise(exercise, i + batchIndex)
+          processExercise(exercise, i + batchIndex),
         );
 
       // Process this batch concurrently
@@ -504,14 +512,14 @@ export const getWorkoutHistory = async (
         if (historyEntry.sets && Array.isArray(historyEntry.sets)) {
           // Ensure we have valid set data
           const validSets = historyEntry.sets.filter(
-            (set: any) => set && typeof set.setNumber === "number"
+            (set: any) => set && typeof set.setNumber === "number",
           ) as ExerciseSet[];
 
           const workout = workoutsByDate[date];
           if (workout && exercise) {
             // Check if this exercise is already in the workout
             const existingExerciseIndex = workout.exercises.findIndex(
-              (e) => e.id === exercise.id
+              (e) => e.id === exercise.id,
             );
 
             if (existingExerciseIndex === -1) {
@@ -534,7 +542,7 @@ export const getWorkoutHistory = async (
 
   // Convert the map to an array and sort by date (newest first)
   const allWorkouts = Object.values(workoutsByDate).sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 
   // Save all workouts to localStorage for fast loading next time
@@ -557,7 +565,7 @@ export const getWorkoutHistory = async (
 export const getWorkoutsInDateRange = (
   workouts: Workout[],
   startDate: string,
-  endDate: string
+  endDate: string,
 ): Workout[] => {
   const start = new Date(startDate).getTime();
   const end = new Date(endDate).getTime();

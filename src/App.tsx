@@ -47,7 +47,7 @@ const App: React.FC = () => {
       console.error("Error restoring state from localStorage:", error);
       // Clear potentially corrupted data
       Object.values(STORAGE_KEYS).forEach((key) =>
-        localStorage.removeItem(key)
+        localStorage.removeItem(key),
       );
     }
   }, []);
@@ -79,19 +79,19 @@ const App: React.FC = () => {
             password,
             (progress) => {
               setLoadingProgress(progress);
-            }
+            },
           );
 
           // Update with potentially new data
           setWorkouts(allWorkouts);
           localStorage.setItem(
             STORAGE_KEYS.WORKOUTS,
-            JSON.stringify(allWorkouts)
+            JSON.stringify(allWorkouts),
           );
         } catch (fetchErr) {
           console.warn(
             "Couldn't update workout data, but using cached data:",
-            fetchErr
+            fetchErr,
           );
           // Still using cached data, so don't show error to user
         } finally {
@@ -106,7 +106,7 @@ const App: React.FC = () => {
             password,
             (progress) => {
               setLoadingProgress(progress);
-            }
+            },
           );
           setWorkouts(allWorkouts);
 
@@ -117,12 +117,12 @@ const App: React.FC = () => {
           localStorage.setItem(STORAGE_KEYS.IS_AUTHENTICATED, "true");
           localStorage.setItem(
             STORAGE_KEYS.WORKOUTS,
-            JSON.stringify(allWorkouts)
+            JSON.stringify(allWorkouts),
           );
         } catch (err) {
           console.error("Login error:", err);
           setAuthError(
-            "Authentication failed. Please check your email and password."
+            "Authentication failed. Please check your email and password.",
           );
         }
       }
@@ -161,7 +161,7 @@ const App: React.FC = () => {
         "", // Empty password triggers use of cached auth
         (progress) => {
           setLoadingProgress(progress);
-        }
+        },
       );
 
       setWorkouts(newWorkouts);
@@ -171,7 +171,7 @@ const App: React.FC = () => {
     } catch (error) {
       console.error("Error refreshing workout data:", error);
       setDataError(
-        "Failed to refresh data. Please try again or log out and log back in."
+        "Failed to refresh data. Please try again or log out and log back in.",
       );
     } finally {
       setDataLoading(false);

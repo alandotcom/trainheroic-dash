@@ -63,7 +63,7 @@ export default function ExerciseTable({ workouts }: ExerciseTableProps) {
         }, new Date(0)),
         totalSets: instances.reduce(
           (sum, instance) => sum + instance.sets.length,
-          0
+          0,
         ),
         bestOneRepMax: bestOneRepMax > 0 ? bestOneRepMax : undefined,
       };
@@ -76,14 +76,14 @@ export default function ExerciseTable({ workouts }: ExerciseTableProps) {
 
     const query = searchQuery.toLowerCase();
     return exercises.filter((exercise) =>
-      exercise.title.toLowerCase().includes(query)
+      exercise.title.toLowerCase().includes(query),
     );
   }, [exercises, searchQuery]);
 
   // Sort exercises by most recently performed
   const sortedExercises = useMemo(() => {
     return [...filteredExercises].sort(
-      (a, b) => b.lastPerformed.getTime() - a.lastPerformed.getTime()
+      (a, b) => b.lastPerformed.getTime() - a.lastPerformed.getTime(),
     );
   }, [filteredExercises]);
 

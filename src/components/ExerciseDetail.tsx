@@ -40,7 +40,7 @@ const ExerciseDetail: React.FC<ExerciseDetailProps> = ({
     return workouts
       .flatMap((workout) => {
         const matchedExercise = workout.exercises.find(
-          (ex) => ex.title === exercise.title
+          (ex) => ex.title === exercise.title,
         );
         if (matchedExercise) {
           return {
@@ -61,7 +61,7 @@ const ExerciseDetail: React.FC<ExerciseDetailProps> = ({
       })
       .filter(Boolean)
       .sort(
-        (a, b) => new Date(b!.date).getTime() - new Date(a!.date).getTime() // Newest first
+        (a, b) => new Date(b!.date).getTime() - new Date(a!.date).getTime(), // Newest first
       );
   }, [exercise.title, workouts]);
 
@@ -76,7 +76,7 @@ const ExerciseDetail: React.FC<ExerciseDetailProps> = ({
         const maxWeight = Math.max(
           ...history.exercise.sets
             .filter((set) => set.rawValue2)
-            .map((set) => set.rawValue2 || 0)
+            .map((set) => set.rawValue2 || 0),
         );
 
         // Add a day to fix the off-by-one issue
@@ -255,7 +255,7 @@ const ExerciseDetail: React.FC<ExerciseDetailProps> = ({
                               onClick={() =>
                                 handleViewWorkout(
                                   historyItem.date,
-                                  historyItem.workoutId
+                                  historyItem.workoutId,
                                 )
                               }
                             >

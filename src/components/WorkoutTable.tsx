@@ -35,7 +35,7 @@ interface WorkoutTableProps {
 
 const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
   const [expandedWorkouts, setExpandedWorkouts] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedExercise, setSelectedExercise] =
@@ -79,7 +79,7 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
         `${workout.date}-${workout.programWorkoutId || ""}`
       );
     },
-    [workoutKeys]
+    [workoutKeys],
   );
 
   // Toggle workout details expanding/collapsing
@@ -96,7 +96,7 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
         return newExpanded;
       });
     },
-    [getWorkoutKey]
+    [getWorkoutKey],
   );
 
   // Highlight matching text
@@ -105,7 +105,7 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
 
     const regex = new RegExp(
       `(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
-      "gi"
+      "gi",
     );
     const parts = text.split(regex);
 
@@ -116,7 +116,7 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
         </mark>
       ) : (
         part
-      )
+      ),
     );
   }, []);
 
@@ -137,7 +137,9 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
             // Search in exercise titles
             if (
               workout.exercises.some((exercise) =>
-                exercise.title.toLowerCase().includes(searchQuery.toLowerCase())
+                exercise.title
+                  .toLowerCase()
+                  .includes(searchQuery.toLowerCase()),
               )
             ) {
               return true;
@@ -152,7 +154,7 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
             return false;
           })
         : workouts,
-    [workouts, searchQuery, formatDate]
+    [workouts, searchQuery, formatDate],
   );
 
   // Handle viewing a workout from exercise detail
@@ -184,11 +186,11 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
 
         // Find the index of the workout in the filtered list
         const workoutIndex = filteredWorkouts.findIndex(
-          (w) => w.date === workoutDate
+          (w) => w.date === workoutDate,
         );
         if (workoutIndex === -1) {
           console.warn(
-            `Workout not found in filtered list for date: ${workoutDate}`
+            `Workout not found in filtered list for date: ${workoutDate}`,
           );
           setPendingWorkoutToView(null);
           return;
@@ -225,7 +227,7 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
         }
       }, 100);
     },
-    [workouts, getWorkoutKey, filteredWorkouts, searchQuery]
+    [workouts, getWorkoutKey, filteredWorkouts, searchQuery],
   );
 
   // Expand all workouts
@@ -236,7 +238,7 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
     } else {
       // Create a new Set with all workout unique keys
       setExpandedWorkouts(
-        new Set(filteredWorkouts.map((w) => getWorkoutKey(w)))
+        new Set(filteredWorkouts.map((w) => getWorkoutKey(w))),
       );
     }
   }, [filteredWorkouts, expandedWorkouts.size, getWorkoutKey]);
@@ -256,17 +258,17 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
               .includes(query.toLowerCase()) ||
             // Search in exercise titles
             workout.exercises.some((exercise) =>
-              exercise.title.toLowerCase().includes(query.toLowerCase())
+              exercise.title.toLowerCase().includes(query.toLowerCase()),
             ) ||
             // Check volume
-            calculateWorkoutVolume(workout).toString().includes(query)
+            calculateWorkoutVolume(workout).toString().includes(query),
         );
         setExpandedWorkouts(
-          new Set(matchingWorkouts.map((w) => getWorkoutKey(w)))
+          new Set(matchingWorkouts.map((w) => getWorkoutKey(w))),
         );
       }
     },
-    [workouts, getWorkoutKey, formatDate]
+    [workouts, getWorkoutKey, formatDate],
   );
 
   // Open exercise details dialog
@@ -349,19 +351,19 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
                         isHighlighted
                           ? "bg-primary/20"
                           : searchQuery &&
-                            (formatDate(workout.date)
-                              .toLowerCase()
-                              .includes(searchQuery.toLowerCase()) ||
-                              workout.exercises.some((ex) =>
-                                ex.title
-                                  .toLowerCase()
-                                  .includes(searchQuery.toLowerCase())
-                              ) ||
-                              calculateWorkoutVolume(workout)
-                                .toString()
-                                .includes(searchQuery))
-                          ? "bg-yellow-50"
-                          : ""
+                              (formatDate(workout.date)
+                                .toLowerCase()
+                                .includes(searchQuery.toLowerCase()) ||
+                                workout.exercises.some((ex) =>
+                                  ex.title
+                                    .toLowerCase()
+                                    .includes(searchQuery.toLowerCase()),
+                                ) ||
+                                calculateWorkoutVolume(workout)
+                                  .toString()
+                                  .includes(searchQuery))
+                            ? "bg-yellow-50"
+                            : ""
                       }`}
                       onClick={() => toggleWorkoutExpand(workout)}
                     >
@@ -383,9 +385,9 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
                           {searchQuery
                             ? highlightText(
                                 calculateWorkoutVolume(
-                                  workout
+                                  workout,
                                 ).toLocaleString() + " lbs",
-                                searchQuery
+                                searchQuery,
                               )
                             : calculateWorkoutVolume(workout).toLocaleString() +
                               " lbs"}
@@ -423,11 +425,11 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
                                             exercise.title
                                               .toLowerCase()
                                               .includes(
-                                                searchQuery.toLowerCase()
+                                                searchQuery.toLowerCase(),
                                               )
                                               ? highlightText(
                                                   exercise.title,
-                                                  searchQuery
+                                                  searchQuery,
                                                 )
                                               : exercise.title}
                                           </span>
@@ -440,7 +442,7 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workouts }) => {
                                           >
                                             Est. 1RM:{" "}
                                             {Math.round(
-                                              exercise.bestEstimated1RM
+                                              exercise.bestEstimated1RM,
                                             )}{" "}
                                             lbs
                                           </Badge>

@@ -137,20 +137,21 @@
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
-  
+
   /* Ensure tables are responsive */
   .table-responsive {
     @apply w-full overflow-x-auto;
   }
-  
+
   /* Text sizes that adjust for mobile */
   .text-responsive {
     @apply text-sm sm:text-base;
   }
-  
+
   /* Fixed viewport issues on mobile */
   @media (max-width: 640px) {
-    html, body {
+    html,
+    body {
       @apply overflow-x-hidden;
       max-width: 100vw;
     }

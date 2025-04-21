@@ -338,7 +338,7 @@ export const getRecentWorkouts = (
   // Ensure parameters are definitely strings
   const start = String(startDate);
   const end = String(endDate);
-  
+
   return client.GET("/3.0/athlete/programworkout/range", {
     ...makeDefaultOptions(sessionToken),
     params: { query: { startDate: start, endDate: end } },
