@@ -70,24 +70,66 @@ const App: React.FC = () => {
         localStorage.setItem(STORAGE_KEYS.IS_AUTHENTICATED, "true");
         setAuthLoading(false);
 
-        // Then check for new workouts in the background - user won't see a loading screen
-        // but will see the progress indicator
+        // Then check for new workouts in the background
         try {
           setLoadingProgress(0);
-          const allWorkouts = await getWorkoutHistory(
-            email,
-            password,
+          setDataLoading(true);
+          
+          // First authenticate to get a session token
+          const { auth } = await import("../api");
+          const { data } = await auth(email, password);
+          if (!data || !data.session_id) {
+            throw new Error("Authentication failed");
+          }
+          
+          const sessionToken = data.session_id;
+          
+          // Find the most recent workout date from our cached data
+          let mostRecentDate = "1970-01-01";
+          const parsedWorkouts = JSON.parse(savedWorkouts);
+          if (parsedWorkouts.length > 0 && parsedWorkouts[0]?.date) {
+            mostRecentDate = parsedWorkouts[0].date;
+          }
+          
+          // Get only new workouts since the most recent one
+          const { fetchNewWorkouts } = await import("./workoutUtils");
+          const newWorkouts = await fetchNewWorkouts(
+            sessionToken,
+            mostRecentDate,
             (progress) => {
               setLoadingProgress(progress);
-            },
+            }
           );
-
-          // Update with potentially new data
-          setWorkouts(allWorkouts);
-          localStorage.setItem(
-            STORAGE_KEYS.WORKOUTS,
-            JSON.stringify(allWorkouts),
-          );
+          
+          if (newWorkouts.length > 0) {
+            // Merge new workouts with existing ones
+            console.log(`Found ${newWorkouts.length} new workouts to add during login`);
+            
+            // Create a map of existing workouts by date
+            const workoutsByDate = new Map<string, Workout>(
+              parsedWorkouts.map((workout: Workout) => [workout.date, workout])
+            );
+            
+            // Add new workouts, but only if they have exercises
+            for (const workout of newWorkouts) {
+              // Don't replace existing workouts with empty ones
+              if (workout.exercises && workout.exercises.length > 0) {
+                workoutsByDate.set(workout.date, workout);
+              } else {
+                // Only add this workout if we don't already have a workout for this date
+                if (!workoutsByDate.has(workout.date)) {
+                  workoutsByDate.set(workout.date, workout);
+                }
+              }
+            }
+            
+            // Sort and update
+            const mergedWorkouts = Array.from(workoutsByDate.values())
+              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) as Workout[];
+            
+            setWorkouts(mergedWorkouts);
+            localStorage.setItem(STORAGE_KEYS.WORKOUTS, JSON.stringify(mergedWorkouts));
+          }
         } catch (fetchErr) {
           console.warn(
             "Couldn't update workout data, but using cached data:",
@@ -95,6 +137,7 @@ const App: React.FC = () => {
           );
           // Still using cached data, so don't show error to user
         } finally {
+          setDataLoading(false);
           setLoadingProgress(0);
         }
       } else {
@@ -128,7 +171,6 @@ const App: React.FC = () => {
       }
     } finally {
       setAuthLoading(false);
-      setDataLoading(false);
       setLoadingProgress(0);
     }
   };
@@ -154,20 +196,63 @@ const App: React.FC = () => {
         mostRecentDate = workouts[0].date;
       }
 
-      // We'll use the cached auth token and look only for new workouts
-      // This approach doesn't require storing credentials
-      const newWorkouts = await getWorkoutHistory(
-        "", // Empty email triggers use of cached auth
-        "", // Empty password triggers use of cached auth
+      // Get session token from localStorage
+      const authCache = localStorage.getItem("trainheroic_auth_cache");
+      if (!authCache) {
+        throw new Error("Authentication data not found. Please log in again.");
+      }
+
+      const authData = JSON.parse(authCache);
+      const sessionToken = authData.data.session_id;
+      
+      if (!sessionToken) {
+        throw new Error("Session token not found. Please log in again.");
+      }
+
+      // Use the new incremental refresh function
+      const { fetchNewWorkouts } = await import("./workoutUtils");
+      const newWorkouts = await fetchNewWorkouts(
+        sessionToken,
+        mostRecentDate,
         (progress) => {
           setLoadingProgress(progress);
-        },
+        }
       );
 
-      setWorkouts(newWorkouts);
-      localStorage.setItem(STORAGE_KEYS.WORKOUTS, JSON.stringify(newWorkouts));
-
-      console.log("Workout data refreshed successfully");
+      if (newWorkouts.length > 0) {
+        // Merge new workouts with existing ones
+        console.log(`Found ${newWorkouts.length} new workouts to add`);
+        
+        // Create a map of existing workouts by date for quick lookup
+        const workoutsByDate = new Map<string, Workout>(
+          workouts.map(workout => [workout.date, workout])
+        );
+        
+        // Add or update workouts, but only if they have exercises
+        for (const workout of newWorkouts) {
+          // Don't replace existing workouts with empty ones
+          if (workout.exercises && workout.exercises.length > 0) {
+            workoutsByDate.set(workout.date, workout);
+          } else {
+            // Only add this workout if we don't already have a workout for this date
+            if (!workoutsByDate.has(workout.date)) {
+              workoutsByDate.set(workout.date, workout);
+            }
+          }
+        }
+        
+        // Convert back to array and sort by date (newest first)
+        const mergedWorkouts = Array.from(workoutsByDate.values())
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) as Workout[];
+        
+        // Update state and localStorage
+        setWorkouts(mergedWorkouts);
+        localStorage.setItem(STORAGE_KEYS.WORKOUTS, JSON.stringify(mergedWorkouts));
+        
+        console.log(`Updated with ${newWorkouts.length} new workouts`);
+      } else {
+        console.log("No new workouts found");
+      }
     } catch (error) {
       console.error("Error refreshing workout data:", error);
       setDataError(

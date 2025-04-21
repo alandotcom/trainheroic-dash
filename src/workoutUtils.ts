@@ -1,9 +1,3 @@
-import {
-  getExerciseHistory,
-  getHistory,
-  auth,
-  getRecentWorkouts,
-} from "../api";
 import type { ExerciseSet, Workout, Exercise } from "../api";
 
 // Cache structure
@@ -154,6 +148,7 @@ export const getWorkoutHistory = async (
 
   // Step 1: Authenticate with provided credentials (with caching)
   const authData = await fetchWithCache<any>(email, "auth", async () => {
+    const { auth } = await import("../api");
     const { data } = await auth(email, password);
     if (data === undefined) {
       throw new Error("Authentication failed");
@@ -194,6 +189,7 @@ export const getWorkoutHistory = async (
     "exercises-list",
     "exercises",
     async () => {
+      const { getHistory } = await import("../api");
       const exercisesResponse = await getHistory(sessionToken);
       if (!exercisesResponse.data) {
         throw new Error("Failed to fetch exercise history");
@@ -245,6 +241,7 @@ export const getWorkoutHistory = async (
           : defaultStartDate;
 
       // Now the API call with guaranteed string parameters
+      const { getRecentWorkouts } = await import("../api");
       const recentWorkoutsResponse = await getRecentWorkouts(
         sessionToken,
         startDateString, // Guaranteed to be a string now
@@ -293,6 +290,7 @@ export const getWorkoutHistory = async (
         "exercises",
         async () => {
           console.log("Force fetching fresh exercise list");
+          const { getHistory } = await import("../api");
           const exercisesResponse = await getHistory(sessionToken);
           if (!exercisesResponse.data) {
             throw new Error("Failed to fetch exercise history");
@@ -399,6 +397,7 @@ export const getWorkoutHistory = async (
 
     try {
       // Get the exercise history to check for new entries
+      const { getExerciseHistory } = await import("../api");
       const exerciseHistoryResponse = await getExerciseHistory(
         exerciseId,
         userId,
@@ -540,10 +539,10 @@ export const getWorkoutHistory = async (
     }
   }
 
-  // Convert the map to an array and sort by date (newest first)
-  const allWorkouts = Object.values(workoutsByDate).sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-  );
+  // Convert the map to an array, filter out workouts with no exercises, and sort by date (newest first)
+  const allWorkouts = Object.values(workoutsByDate)
+    .filter(workout => workout.exercises && workout.exercises.length > 0)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   // Save all workouts to localStorage for fast loading next time
   try {
@@ -574,6 +573,236 @@ export const getWorkoutsInDateRange = (
     const workoutDate = new Date(workout.date).getTime();
     return workoutDate >= start && workoutDate <= end;
   });
+};
+
+/**
+ * Fetch only new workouts since the last update
+ * @param sessionToken The authentication session token
+ * @param mostRecentWorkoutDate The date of the most recent workout in cache
+ * @param onProgress Progress callback function
+ * @returns Array of new workouts
+ */
+export const fetchNewWorkouts = async (
+  sessionToken: string,
+  mostRecentWorkoutDate: string | undefined,
+  onProgress?: (progress: number) => void
+): Promise<Workout[]> => {
+  if (!sessionToken) {
+    console.error("No session token provided for fetchNewWorkouts");
+    return [];
+  }
+
+  onProgress?.(10);
+  
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split("T")[0];
+  
+  console.log(`Fetching workouts from ${mostRecentWorkoutDate} to ${today}`);
+  
+  try {
+    // Check for workouts between the most recent date and today
+    // Import the API function to get proper type checking
+    const { getRecentWorkouts } = await import("../api");
+    
+    // Ensure we have valid date strings
+    const validStartDate = mostRecentWorkoutDate || "1970-01-01";
+    const validEndDate = today || new Date().toISOString().split("T")[0];
+    
+    const recentWorkoutsResponse = await getRecentWorkouts(
+      sessionToken,
+      String(validStartDate),
+      String(validEndDate)
+    );
+    
+    onProgress?.(30);
+
+    if (!recentWorkoutsResponse.data || recentWorkoutsResponse.data.length === 0) {
+      console.log("No new workouts found");
+      onProgress?.(100);
+      return [];
+    }
+    
+    // Process the new workouts data
+    const newWorkouts = recentWorkoutsResponse.data;
+    console.log(`Found ${newWorkouts.length} recent workouts to process`);
+    
+    // Fetch updated exercise list to make sure we have all exercises
+    const { getHistory } = await import("../api");
+    const exercisesResponse = await getHistory(sessionToken);
+    
+    if (!exercisesResponse.data) {
+      console.warn("Failed to fetch updated exercise list");
+      onProgress?.(100);
+      return [];
+    }
+    
+    const exercises = exercisesResponse.data;
+    onProgress?.(50);
+    
+    // Map to track workouts by date
+    const workoutsByDate: Record<string, Workout> = {};
+    
+    // Process workout data
+    await processWorkoutsFromExercises(
+      newWorkouts, 
+      exercises, 
+      sessionToken,
+      workoutsByDate,
+      onProgress
+    );
+    
+    // Convert to array and sort by date
+    // Also filter out any workouts with no exercises to avoid empty workout entries
+    const sortedWorkouts = Object.values(workoutsByDate)
+      .filter(workout => workout.exercises && workout.exercises.length > 0)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    onProgress?.(100);
+    return sortedWorkouts;
+  } catch (error) {
+    console.error("Error fetching new workouts:", error);
+    onProgress?.(100);
+    return [];
+  }
+};
+
+/**
+ * Helper function to process workout data from exercises
+ * @param workouts Raw workout data from API
+ * @param exercises List of exercises
+ * @param sessionToken Auth session token
+ * @param workoutsByDate Map to store processed workouts by date
+ * @param onProgress Progress callback function
+ */
+const processWorkoutsFromExercises = async (
+  workouts: any[],
+  exercises: Exercise[],
+  sessionToken: string,
+  workoutsByDate: Record<string, Workout>,
+  onProgress?: (progress: number) => void
+): Promise<void> => {
+  if (!workouts.length || !exercises.length) return;
+  
+  // Find exercises mentioned in the workout data
+  const exercisesToFetch = new Map<string, Exercise>();
+  
+  // Extract exercise IDs from workout data
+  for (const workout of workouts) {
+    if (workout && workout.exercise_stats && Array.isArray(workout.exercise_stats)) {
+      for (const stat of workout.exercise_stats) {
+        if (stat && stat.exercise_id) {
+          // Find the full exercise info
+          const exerciseInfo = exercises.find(
+            (e) => String(e.id) === String(stat.exercise_id)
+          );
+          
+          if (exerciseInfo) {
+            exercisesToFetch.set(String(exerciseInfo.id), exerciseInfo);
+          }
+        }
+      }
+    }
+    
+    // Only pre-populate workout entries if the workout has exercise_stats
+    if (workout.date && workout.exercise_stats && workout.exercise_stats.length > 0) {
+      // Create workout entry only if it doesn't exist yet
+      if (!workoutsByDate[workout.date]) {
+        workoutsByDate[workout.date] = {
+          date: workout.date,
+          programWorkoutId: workout.id,
+          exercises: [],
+        };
+      }
+    }
+  }
+  
+  // Maximum concurrent requests
+  const MAX_CONCURRENT_REQUESTS = 5;
+  
+  // Convert map to array of exercises to process
+  const exercisesToProcess = Array.from(exercisesToFetch.values());
+  console.log(`Processing ${exercisesToProcess.length} exercises for new workouts`);
+  
+  // Process exercises in batches
+  for (let i = 0; i < exercisesToProcess.length; i += MAX_CONCURRENT_REQUESTS) {
+    const batch = exercisesToProcess
+      .slice(i, i + MAX_CONCURRENT_REQUESTS)
+      .map(async (exercise) => {
+        if (!exercise || !exercise.id) return null;
+        
+        const exerciseId = String(exercise.id);
+        try {
+          // Fetch detailed exercise history
+          const { getExerciseHistory } = await import("../api");
+          const exerciseHistoryResponse = await getExerciseHistory(
+            exerciseId,
+            0, // userId parameter required but will be ignored by the API when session token is provided
+            sessionToken
+          );
+          
+          if (!exerciseHistoryResponse.data?.history) return null;
+          
+          const exerciseHistory = exerciseHistoryResponse.data.history;
+          
+          // Cache the exercise history
+          const cacheKey = `trainheroic_exercise_history_${exerciseId}`;
+          localStorage.setItem(cacheKey, JSON.stringify({
+            timestamp: Date.now(),
+            data: exerciseHistory
+          }));
+          
+          return { exercise, exerciseHistory };
+        } catch (error) {
+          console.error(`Error fetching history for exercise ${exercise.title}:`, error);
+          return null;
+        }
+      });
+    
+    // Wait for batch to complete
+    const batchResults = await Promise.all(batch);
+    
+    // Update progress
+    const progressPercent = 50 + Math.floor((40 * (i + MAX_CONCURRENT_REQUESTS)) / Math.max(exercisesToProcess.length, 1));
+    onProgress?.(progressPercent);
+    
+    // Process results to populate workoutsByDate
+    for (const result of batchResults) {
+      if (!result) continue;
+      
+      const { exercise, exerciseHistory } = result;
+      
+      for (const historyEntry of exerciseHistory) {
+        const date = historyEntry.dateCompleted;
+        
+        if (typeof date === "string" && workoutsByDate[date]) {
+          // Add this exercise to the workout if it's not already there
+          if (historyEntry.sets && Array.isArray(historyEntry.sets)) {
+            const validSets = historyEntry.sets.filter(
+              (set: any) => set && typeof set.setNumber === "number"
+            ) as ExerciseSet[];
+            
+            const workout = workoutsByDate[date];
+            if (workout && exercise) {
+              // Check if this exercise is already in the workout
+              const existingExerciseIndex = workout.exercises.findIndex(
+                (e) => e.id === exercise.id
+              );
+              
+              if (existingExerciseIndex === -1) {
+                // Add new exercise
+                workout.exercises.push({
+                  id: exercise.id,
+                  title: exercise.title,
+                  sets: validSets,
+                  bestEstimated1RM: historyEntry.bestEstimated1RM,
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 };
 
 /**
